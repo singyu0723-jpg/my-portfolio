@@ -57,6 +57,12 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--mut);cursor:defaul
 .seg .s2{font-size:11.5px;font-weight:700;opacity:.92;line-height:1.25}
 .sgx{font-style:normal}
 .mkin{width:96px;text-align:center}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin:4px 0}
+.mcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 13px 9px}
+.mcard.miss{opacity:.55}
+.mname{font-size:12.5px;font-weight:800;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mdrop{font-size:21px;font-weight:900;margin:1px 0;font-variant-numeric:tabular-nums}
+.msub{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;margin-bottom:5px;white-space:nowrap}
 .bar{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:0 0 6px;border:1px solid var(--line)}
 .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;white-space:nowrap;transition:width .15s;overflow:hidden}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 4px}
@@ -151,6 +157,9 @@ th,td{padding:6px 4px;font-size:12px}
 .bkhd .amt{flex-basis:100%;text-align:left;margin-left:0;margin-top:2px;font-size:15px;display:flex;align-items:baseline;gap:8px}
 .bkhd .amt .s{font-size:11px}
 .mkstatus{font-size:10.5px;padding:2px 9px;margin-left:6px}
+.mgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+.mdrop{font-size:18px}
+#syncbtn{position:static;display:inline-block;margin:0 0 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .sgx{display:none}
 .seg .s1{font-size:11px}.seg .s2{font-size:10px}
 .bar{height:30px}
@@ -217,11 +226,8 @@ th,td{padding:6px 4px;font-size:12px}
     <h2 class="sect"><span class="num">③</span>多市場位階<span class="mkstatus" id="mkstatus">載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
   </div>
   <div class="secbody" id="sb_mkt">
-  <table class="ctr">
-    <tr><th style="width:24%">指標 / 標的</th><th style="width:19%">現價</th><th style="width:19%">近高(近月)</th><th style="width:16%">自高點</th><th style="width:22%">區間</th></tr>
-    <tbody id="mktbody"></tbody>
-  </table>
-  <div style="margin-top:8px"><button class="btn" onclick="fetchMkt()">↻ 重新抓價</button></div>
+  <div class="mgrid" id="mktgrid"></div>
+  <div style="margin-top:10px"><button class="btn" onclick="fetchMkt()">↻ 重新抓價</button></div>
   <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
   </div>
 </section>
@@ -630,25 +636,33 @@ function resetPlan(){
 let MKT=[['加權指數','^TWII',43226,46459],['那斯達克','^IXIC',null,null],['費半 SOX','^SOX',null,null],
   ['台積電 2330','2330.TW',2255,2440],['元大 0050','0050.TW',100.25,107.85],['QQQ','QQQ',693.69,null],['VOO','VOO',678.00,null],['GOOGL','GOOGL',356.38,null]];
 function buildMkt(){
-  const tb=document.getElementById('mktbody');tb.innerHTML='';
+  const g=document.getElementById('mktgrid');if(!g)return;g.innerHTML='';
   MKT.forEach((m,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td class="b">'+m[0]+'<span class="qa" id="mq_'+i+'"></span></td>'+
-      '<td><input type="number" class="smin mkin" data-mi="'+i+'" data-mf="2" value="'+(m[2]==null?'':m[2])+'" step="any"></td>'+
-      '<td><input type="number" class="smin mkin" data-mi="'+i+'" data-mf="3" value="'+(m[3]==null?'':m[3])+'" step="any"></td>'+
-      '<td class="b" id="md_'+i+'">—</td><td id="mz_'+i+'">—</td>';
-    tb.appendChild(tr);
+    const d=document.createElement('div');d.className='mcard';d.id='mk_'+i;
+    d.innerHTML='<div class="mname">'+m[0]+'</div>'+
+      '<div class="mdrop" id="md_'+i+'">—</div>'+
+      '<div class="msub" id="mc_'+i+'">—</div>'+
+      '<div id="mz_'+i+'"></div>';
+    g.appendChild(d);
   });
-  tb.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{const v=e.target.value;MKT[+e.target.dataset.mi][+e.target.dataset.mf]=v===''?null:parseFloat(v);recalcMkt();}));
   recalcMkt();
 }
 function recalcMkt(){
   MKT.forEach((m,i)=>{
-    const cur=m[2],hi=m[3];const de=document.getElementById('md_'+i),ze=document.getElementById('mz_'+i);
-    if(!de||!ze)return;
-    if(!isFinite(cur)||!isFinite(hi)||hi<=0){de.textContent='—';de.className='n b';ze.innerHTML='<span class="zone z0">待補</span>';return;}
+    const cur=m[2],hi=m[3];
+    const card=document.getElementById('mk_'+i),de=document.getElementById('md_'+i),
+          ce=document.getElementById('mc_'+i),ze=document.getElementById('mz_'+i);
+    if(!de)return;
+    if(!isFinite(cur)||!isFinite(hi)||hi<=0){
+      if(card)card.className='mcard miss';
+      de.textContent='—';de.className='mdrop';
+      ce.textContent=isFinite(cur)&&cur?('現價 '+(+cur).toLocaleString()):'抓取中…';
+      ze.innerHTML='<span class="zone z0">待補</span>';return;}
+    if(card)card.className='mcard';
     const drop=(hi-cur)/hi*100;
-    de.textContent=(drop>=0?'−':'+')+Math.abs(drop).toFixed(1)+'%';de.className='n b '+(drop>=0?'dn':'up');
+    de.textContent=(drop>=0?'−':'+')+Math.abs(drop).toFixed(1)+'%';
+    de.className='mdrop '+(drop>=0?'dn':'up');
+    ce.textContent=(+cur).toLocaleString()+'｜高 '+(+hi).toLocaleString();
     let z='<span class="zone z0">觀望</span>';
     if(drop>=15)z='<span class="zone z2">重挫 ≥15%</span>';else if(drop>=10)z='<span class="zone z2">深回檔 ≥10%</span>';else if(drop>=8)z='<span class="zone z1">留意 8–10%</span>';
     ze.innerHTML=z;
