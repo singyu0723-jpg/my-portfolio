@@ -10,6 +10,12 @@
 <meta property="og:title" content="投資配置">
 <meta property="og:description" content="投資配置">
 <meta name="description" content="投資配置">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="投資配置">
+<meta name="theme-color" content="#f4efe6">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='%23FFD000'%20d='M12%2017.27L18.18%2021l-1.64-7.03L22%209.24l-7.19-.61L12%202%209.19%208.63%202%209.24l5.46%204.73L5.82%2021z'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f4efe6;--card:#fffdf8;--ink:#322a1e;--mut:#867a66;--line:#e6dccb;
@@ -110,7 +116,7 @@ h2.sect{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:21px
 .sect .hint{font-size:12.5px;color:var(--mut);font-weight:700;letter-spacing:.5px}
 .sect .sbtn{position:static;margin-left:auto;flex:0 0 auto}
 .secbody{margin-top:12px}
-.mkstatus{font-size:12px;color:var(--mut);margin-left:8px}
+.mkstatus{background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:11.5px;color:var(--mut);font-weight:700;margin-left:10px;white-space:nowrap;letter-spacing:0}
 .smin{width:78px}
 td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut);font-size:12.5px;line-height:1.45}
 .twrap{overflow-x:auto}
@@ -142,7 +148,9 @@ th,td{padding:6px 4px;font-size:12px}
 .bk th,.bk td{padding:5px 3px;font-size:12px}
 .bk .smin{width:58px;font-size:12px;padding:4px 4px}
 .usdhint{display:none}
-.bkhd .amt{font-size:15px}
+.bkhd .amt{flex-basis:100%;text-align:left;margin-left:0;margin-top:2px;font-size:15px;display:flex;align-items:baseline;gap:8px}
+.bkhd .amt .s{font-size:11px}
+.mkstatus{font-size:10.5px;padding:2px 9px;margin-left:6px}
 .sgx{display:none}
 .seg .s1{font-size:11px}.seg .s2{font-size:10px}
 .bar{height:30px}
@@ -206,10 +214,9 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('mkt')">
-    <h2 class="sect"><span class="num">③</span>多市場位階<span class="hint">自動抓價 · 美台大盤＋五檔</span><span class="mkstatus" id="mkstatus">　自動載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
+    <h2 class="sect"><span class="num">③</span>多市場位階<span class="mkstatus" id="mkstatus">載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
   </div>
   <div class="secbody" id="sb_mkt">
-  <div class="sub" style="margin-top:0">頁面開啟自動抓現價與近月高（Yahoo）。抓不到或想試算可手動覆蓋。</div>
   <table class="ctr">
     <tr><th style="width:24%">指標 / 標的</th><th style="width:19%">現價</th><th style="width:19%">近高(近月)</th><th style="width:16%">自高點</th><th style="width:22%">區間</th></tr>
     <tbody id="mktbody"></tbody>
@@ -472,7 +479,6 @@ function buildPlan(){
       '<span class="zone" id="bz_'+i+'"></span>'+
       '<button class="btn ghost" style="margin-left:auto;flex:0 0 auto" id="tg_'+i+'" onclick="togglePlan('+i+')">'+(S.open[i]?'▲ 收合':'▼ 展開填買入')+'</button>'+
       '<span class="amt"><span id="binv_'+i+'">$0</span><div class="s">本批已投入 / 目標 <b id="bamt_'+i+'">—</b></div></span></div>'+
-      '<div class="bknote">'+p.note+'　·　全組合累計應達 <b id="bcum_'+i+'">—</b></div>'+
       '<div id="bviz_'+i+'"></div>'+
       '<div id="bd_'+i+'" style="display:'+(S.open[i]?'':'none')+'">'+
       '<table style="margin-top:6px"><tr><th>標的</th><th class="n">本批目標</th><th class="n">成交均價</th><th class="n">買入股數</th><th class="n">已投入</th><th class="n">達成</th></tr>'+rows+'</table>'+
@@ -665,7 +671,7 @@ async function yget(sym){
   return null;
 }
 async function fetchMkt(){
-  const st=document.getElementById('mkstatus');st.textContent='　自動抓價中…';let ok=0;
+  const st=document.getElementById('mkstatus');st.textContent='抓價中…';let ok=0;
   for(let i=0;i<MKT.length;i++){
     const r=await yget(MKT[i][1]);const q=document.getElementById('mq_'+i);
     if(r){MKT[i][2]=Math.round(r.price*100)/100;MKT[i][3]=Math.round(r.high*100)/100;
@@ -675,7 +681,7 @@ async function fetchMkt(){
     else{if(q)q.textContent='⚪';}
     recalcMkt();
   }
-  st.textContent='　更新 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})+'（'+ok+'/'+MKT.length+'）';
+  st.textContent='🟢 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+' 更新（'+ok+'/'+MKT.length+'）';
 }
 document.getElementById('fund').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 document.getElementById('fx').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
