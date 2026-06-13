@@ -1,6 +1,6 @@
 {
-  "name": "投資配置",
-  "short_name": "投資配置",
+  "name": "資產配置",
+  "short_name": "資產配置",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f4efe6",

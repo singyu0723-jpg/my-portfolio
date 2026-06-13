@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>投資配置</title>
+<title>資產配置</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -143,10 +143,25 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .pieColTot{font-size:13px;font-weight:800;color:var(--mut);font-variant-numeric:tabular-nums}
 .pieCol .pieWrap{padding:24px 0 20px}
 .pieCol .pie3d{width:185px;height:185px}
-.catbar{display:flex;height:26px;border-radius:8px;overflow:hidden;margin:11px 0 0;border:1px solid var(--line)}
-.catbar .cseg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden}
+.catbar{display:flex;height:42px;border-radius:9px;overflow:hidden;margin:11px 0 2px;border:1px solid var(--line)}
+.catbar .cseg{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;white-space:nowrap;overflow:hidden;line-height:1.18;padding:0 2px;text-align:center}
+.catbar .cseg .c1{font-size:11.5px}
+.catbar .cseg .c2{font-size:10.5px;font-weight:700;opacity:.95}
 .catrow{display:flex;gap:6px 14px;font-size:12px;font-weight:700;color:var(--mut);margin:7px 1px 0;flex-wrap:wrap}
 .catrow b{color:var(--ink)}
+.svgpie{display:flex;justify-content:center;padding:14px 0 4px}
+.svgpie svg{width:100%;max-width:250px;height:auto;filter:drop-shadow(0 10px 12px rgba(0,0,0,.16))}
+.pieinfo{min-height:22px;text-align:center;font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:7px;margin:2px 0;flex-wrap:wrap}
+.pieinfo .pd{width:12px;height:12px;border-radius:4px;display:inline-block}
+.pieinfo .hint{color:var(--mut);font-weight:600}
+.stage2{width:100%;border-collapse:collapse;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+.stage2 th,.stage2 td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px}
+.stage2 thead th{font-size:12px;color:var(--mut);font-weight:800;text-align:right;border-bottom:2px solid var(--line)}
+.stage2 thead th:first-child{text-align:left}
+.stage2 tbody th{text-align:left;font-weight:800;color:var(--ink);white-space:nowrap}
+.stage2 tbody td{text-align:right;font-weight:800;color:var(--ink)}
+.stage2 tbody tr:last-child td,.stage2 tbody tr:last-child th{border-bottom:none}
+@media(max-width:680px){.twopie{gap:12px}.pieCol{min-width:0;flex-basis:100%}.svgpie svg{max-width:230px}.stage2 th,.stage2 td{padding:8px 6px;font-size:13px}.catbar{height:44px}}
 .flow{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
 .fcard{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px}
 .fcard .ft{font-size:12.5px;color:var(--mut);font-weight:800}
@@ -313,35 +328,27 @@ th,td{padding:6px 4px;font-size:12px}
     <div class="pieCol">
       <div class="pieColT">貸款前 · 階段一（僅自有資金）<span class="pieColTot" id="as_tot_a"></span></div>
       <div id="as_cat_a"></div>
-      <div class="pieWrap"><div class="pie3d" id="as_pie_a"></div></div>
+      <div class="svgpie" id="as_pie_a"></div>
+      <div class="pieinfo" id="as_pieinfo_a"></div>
       <div class="pielegend" id="as_legend_a"></div>
     </div>
     <div class="pieCol">
       <div class="pieColT">貸款後 · 階段二（自有＋貸款）<span class="pieColTot" id="as_tot_b"></span></div>
       <div id="as_cat_b"></div>
-      <div class="pieWrap"><div class="pie3d" id="as_pie_b"></div></div>
+      <div class="svgpie" id="as_pie_b"></div>
+      <div class="pieinfo" id="as_pieinfo_b"></div>
       <div class="pielegend" id="as_legend_b"></div>
     </div>
   </div>
 
   <div class="barlbl" style="margin-top:22px">兩階段佈署</div>
-  <div class="flow">
-    <div class="fcard" style="border-color:var(--accent)">
-      <div class="ft">第一階段 · 現有自有資金</div>
-      <div class="fv" id="as_p1v">—</div>
-      <div class="fs" id="as_p1s">—</div>
-    </div>
-    <div class="fcard">
-      <div class="ft">第二階段 · 貸款到位後</div>
-      <div class="fv" id="as_p2v">—</div>
-      <div class="fs" id="as_p2s">—</div>
-    </div>
-    <div class="fcard" style="border-color:var(--amb)">
-      <div class="ft">完成後 · 投資總部位</div>
-      <div class="fv" id="as_iv">—</div>
-      <div class="fs" id="as_is">—</div>
-    </div>
-  </div>
+  <table class="stage2">
+    <thead><tr><th></th><th>總資金</th><th>投資</th><th>現金</th></tr></thead>
+    <tbody>
+      <tr><th>貸款前</th><td id="st_a_t">—</td><td id="st_a_i">—</td><td id="st_a_c">—</td></tr>
+      <tr><th>貸款後</th><td id="st_b_t">—</td><td id="st_b_i">—</td><td id="st_b_c">—</td></tr>
+    </tbody>
+  </table>
   <div class="note">投資部位 ＝ 自有 ＋ 貸款 − 保留現金。第一階段先動用自有資金；貸款到位後補足第二階段，現金回到保留目標。<b>提醒：</b>貸款投資屬槓桿，放大賺賠；第一階段現金若低於醫療保留目標，急用時需賣出投資（可能撞低點）。本頁僅供規劃試算，非投資建議。<br>投資部位的 QQQ/VOO/GOOGL/2330/0050 比例沿用「評估工具」分頁的設定，於此頁同步顯示。</div>
 </section>
 
@@ -849,6 +856,9 @@ async function buildPnlChart(){
 }
 document.getElementById('fund').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 document.getElementById('fx').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
+/* 互動圓餅工具（slice 路徑 + hover/點擊浮資訊） */
+function pieSlicePath(cx,cy,r,a0,a1){var pt=function(a){var rad=(a-90)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];};if(a1-a0>=359.999){return 'M'+(cx-r)+' '+cy+' A'+r+' '+r+' 0 1 1 '+(cx+r)+' '+cy+' A'+r+' '+r+' 0 1 1 '+(cx-r)+' '+cy+' Z';}var s=pt(a0),e=pt(a1),lg=(a1-a0)>180?1:0;return 'M'+cx+' '+cy+' L'+s[0].toFixed(2)+' '+s[1].toFixed(2)+' A'+r+' '+r+' 0 '+lg+' 1 '+e[0].toFixed(2)+' '+e[1].toFixed(2)+' Z';}
+function pieInfo(sfx,i){var arr=(window.PIEDATA||{})[sfx];if(!arr)return;var s=arr[i];var el=document.getElementById('as_pieinfo_'+sfx);if(el&&s)el.innerHTML='<span class="pd" style="background:'+s.color+'"></span><b>'+s.name+'</b>　'+s.pct.toFixed(1)+'%　$'+f0(s.amt);}
 /* ───────── 💰 總資產配置 ───────── */
 function recalcAssets(){
   const own=gv('as_own'),loan=gv('as_loan'),res=gv('as_res');
@@ -877,21 +887,27 @@ function recalcAssets(){
       lg+='<div class="pli"><span class="pd" style="background:'+a[2]+'"></span><span class="pn">'+a[1].replace('台積電 ','').replace('元大 ','')+'</span><span class="pp">'+pct.toFixed(1)+'%</span><span class="pa">$'+f0(amt)+'</span></div>';});
     const cpct=gd>0?cashAmt/gd*100:0;cg.push('#8a7b63 '+acc.toFixed(2)+'% '+(acc+cpct).toFixed(2)+'%');
     lg+='<div class="pli"><span class="pd" style="background:#8a7b63"></span><span class="pn">現金</span><span class="pp">'+cpct.toFixed(1)+'%</span><span class="pa">$'+f0(cashAmt)+'</span></div>';
-    const pe=document.getElementById('as_pie_'+sfx);if(pe)pe.style.background='conic-gradient('+cg.join(',')+')';
+    const slices=[];ASSETS.forEach(a=>{const amt=investAmt*A[a[0]]/hold;slices.push({name:a[1].replace('台積電 ','').replace('元大 ',''),amt:amt,color:a[2],pct:gd>0?amt/gd*100:0});});
+    slices.push({name:'現金',amt:cashAmt,color:'#8a7b63',pct:cpct});
+    window.PIEDATA=window.PIEDATA||{};window.PIEDATA[sfx]=slices;
+    let ang=0,paths='';
+    slices.forEach((s,si)=>{if(s.pct<=0)return;const a0=ang,a1=ang+s.pct/100*360;ang=a1;
+      paths+='<path d="'+pieSlicePath(100,66,58,a0,a1)+'" fill="'+s.color+'" stroke="#fff8ee" stroke-width="1" style="cursor:pointer" onmouseenter="pieInfo(\''+sfx+'\','+si+')" onclick="pieInfo(\''+sfx+'\','+si+')"/>';});
+    const pe=document.getElementById('as_pie_'+sfx);
+    if(pe)pe.innerHTML='<svg viewBox="0 0 200 140" role="img" aria-label="資產分布圓餅"><ellipse cx="100" cy="78" rx="58" ry="36" fill="#b3a489"/><g transform="translate(100 66) scale(1 0.62) translate(-100 -66)">'+paths+'</g></svg>';
+    const inf=document.getElementById('as_pieinfo_'+sfx);if(inf)inf.innerHTML='<span class="hint">滑鼠移／手機點切片看明細</span>';
     const le=document.getElementById('as_legend_'+sfx);if(le)le.innerHTML=lg;
     const cats=[['現股',stk,'#127a6b'],['ETF',etf,'#caa23c'],['現金',cashAmt,'#8a7b63']];
-    let cb='',ct=[];cats.forEach(c=>{const pct=gd>0?c[1]/gd*100:0;
-      if(pct>0)cb+='<div class="cseg" style="width:'+pct+'%;background:'+c[2]+'">'+(pct>=10?c[0]+' '+pct.toFixed(0)+'%':'')+'</div>';
-      ct.push('<span><b>'+c[0]+'</b> '+pct.toFixed(0)+'%（$'+f0(c[1])+'）</span>');});
-    const ce=document.getElementById('as_cat_'+sfx);if(ce)ce.innerHTML='<div class="catbar">'+cb+'</div><div class="catrow">'+ct.join('')+'</div>';
+    let cb='';cats.forEach(c=>{const pct=gd>0?c[1]/gd*100:0;if(pct<=0)return;
+      cb+='<div class="cseg" style="width:'+pct+'%;background:'+c[2]+'"><span class="c1">'+c[0]+' '+pct.toFixed(0)+'%</span>'+(pct>=12?'<span class="c2">$'+f0(c[1])+'</span>':'')+'</div>';});
+    const ce=document.getElementById('as_cat_'+sfx);if(ce)ce.innerHTML='<div class="catbar">'+cb+'</div>';
     const te=document.getElementById('as_tot_'+sfx);if(te)te.textContent='合計 $'+f0(gd);
   }
   drawPie('a',p1,p1cash);
   drawPie('b',invest,res);
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
-  set('as_p1v','$'+f0(p1));set('as_p1s','自有 $'+f0(own)+' → 投資 $'+f0(p1)+'，留現金 $'+f0(p1cash));
-  set('as_p2v','$'+f0(p2));set('as_p2s','貸款 $'+f0(loan)+' → 投資 $'+f0(p2)+'，補現金 $'+f0(Math.max(0,res-p1cash)));
-  set('as_iv','$'+f0(invest));set('as_is','現金回到保留目標 $'+f0(res)+'｜投資佔總資產 '+(grand>0?(+(invest/grand*100).toFixed(0)):0)+'%');
+  set('st_a_t','$'+f0(own));set('st_a_i','$'+f0(p1));set('st_a_c','$'+f0(p1cash));
+  set('st_b_t','$'+f0(total));set('st_b_i','$'+f0(invest));set('st_b_c','$'+f0(res));
   const w=document.getElementById('as_warn');
   if(w){let msg='';
     if(p1cash<res)msg+='<div class="warnbox">⚠ 第一階段現金 $'+f0(p1cash)+' 低於醫療保留目標 $'+f0(res)+'（缺 $'+f0(res-p1cash)+'）— 貸款到位前若急用需賣出投資。</div>';
