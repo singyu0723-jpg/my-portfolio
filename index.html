@@ -162,6 +162,10 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .pnlcell .pl{font-size:12px;color:var(--mut);font-weight:800}
 .pnlcell b{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
 .exok{font-size:13px;font-weight:700;color:var(--dn);background:rgba(15,157,99,.08);border:1px solid rgba(15,157,99,.3);border-radius:10px;padding:8px 12px;margin:10px 0 0}
+#assetfund{display:grid;grid-template-columns:max-content minmax(80px,1fr) max-content minmax(80px,1fr);gap:9px 14px;align-items:center}
+.dptot{font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:3px}
+.dptot b{color:var(--ink)}
+@media(max-width:680px){#assetfund{grid-template-columns:max-content 1fr}}
 @media(max-width:680px){.pnlcell{min-width:0;flex-basis:calc(50% - 5px)}.pnlcell b{font-size:17px}}
 .stage2{width:100%;border-collapse:collapse;margin:8px 0 2px;font-variant-numeric:tabular-nums}
 .stage2 th,.stage2 td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px}
@@ -319,7 +323,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <h2 class="sect"><span class="num">💰</span>總資產配置<span class="hint">自有＋貸款，投資與現金的全貌</span></h2>
-  <div class="fundbox" style="display:grid;grid-template-columns:max-content 1fr;gap:9px 12px;align-items:center">
+  <div class="fundbox" id="assetfund">
     <label>自有現金</label><input type="number" id="as_own" value="2000000" step="100000" min="0">
     <label>貸款金額</label><input type="number" id="as_loan" value="1500000" step="100000" min="0">
     <label>醫療保留現金</label><input type="number" id="as_res" value="1000000" step="100000" min="0">
@@ -327,14 +331,11 @@ th,td{padding:6px 4px;font-size:12px}
   </div>
   <div id="as_warn"></div>
 
-  <div class="barlbl" style="margin-top:14px">資金佈署 · 貸款前 vs 貸款後</div>
-  <table class="stage2">
-    <thead><tr><th></th><th>總資金</th><th>投資</th><th>現金</th></tr></thead>
-    <tbody>
-      <tr><th>貸款前</th><td id="st_a_t">—</td><td id="st_a_i">—</td><td id="st_a_c">—</td></tr>
-      <tr><th>貸款後</th><td id="st_b_t">—</td><td id="st_b_i">—</td><td id="st_b_c">—</td></tr>
-    </tbody>
-  </table>
+  <div class="barlbl" style="margin-top:14px">資金佈署</div>
+  <div class="dptot">貸款前 · 總資金 <b id="as_tot_aa">—</b></div>
+  <div class="srcbar" id="as_bar_a"></div>
+  <div class="dptot" style="margin-top:9px">貸款後 · 總資金 <b id="as_tot_bb">—</b></div>
+  <div class="srcbar" id="as_bar_b"></div>
 
   <div class="barlbl">資金來源</div>
   <div class="srcbar" id="as_srcbar"></div>
@@ -925,8 +926,9 @@ function recalcAssets(){
   drawPie('a',p1,p1cash);
   drawPie('b',invest,res);
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
-  set('st_a_t','$'+f0(own));set('st_a_i','$'+f0(p1));set('st_a_c','$'+f0(p1cash));
-  set('st_b_t','$'+f0(total));set('st_b_i','$'+f0(invest));set('st_b_c','$'+f0(res));
+  set('as_tot_aa','$'+f0(own));set('as_tot_bb','$'+f0(total));
+  const dbar=(id,tot,iv,cs)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML='';[['投資',iv,'#0d9488'],['現金',cs,'#8a7b63']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(tot,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(tot>0?(+(g[1]/tot*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});};
+  dbar('as_bar_a',own,p1,p1cash);dbar('as_bar_b',total,invest,res);
   const w=document.getElementById('as_warn');
   if(w){let msg='';
     if(p1cash<res)msg+='<div class="warnbox">⚠ 第一階段現金 $'+f0(p1cash)+' 低於醫療保留目標 $'+f0(res)+'（缺 $'+f0(res-p1cash)+'）— 貸款到位前若急用需賣出投資。</div>';
