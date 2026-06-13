@@ -494,7 +494,7 @@ function recalcAlloc(){
   recalcPlan();
 }
 function resetAlloc(){
-  document.getElementById('fund').value=1000000;
+  /* 只還原五檔比例，保留總額與匯率不動 */
   ASSETS.forEach(a=>{A[a[0]]=a[4];const s=document.getElementById('r_'+a[0]);if(s)s.value=a[4];});
   recalcAlloc();
 }
