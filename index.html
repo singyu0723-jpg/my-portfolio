@@ -409,24 +409,25 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect">四次大型危機<span class="hint">美元含息 · 回本時間見表下附註</span></h2>
+  <h2 class="sect">四次大型危機<span class="hint">含息 · 2330/0050 為台股 · 回本見表下附註</span></h2>
   <div class="note" style="border:none;margin:2px 0 4px;padding-top:2px"><b>互比標的</b>：
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="1" checked> QQQ</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="2" checked> GOOGL</label>
-    <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="3" checked> 台積電 ADR</label>
+    <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="3" checked> 台積電 2330</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="4" checked> 0050</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="5" checked> SPY</label>
   </div>
   <div class="twrap"><table id="t4">
-    <tr><th>危機</th><th class="n">QQQ</th><th class="n">GOOGL</th><th class="n">台積電 ADR</th><th class="n">0050</th><th class="n">SPY</th></tr>
-    <tr><td class="b">2000–02 網路泡沫（3 年累計）</td><td class="n dn"><b>−73%</b></td><td class="n">未上市</td><td class="n dn"><b>−69%</b></td><td class="n">未上市</td><td class="n dn">−37.5%</td></tr>
-    <tr><td class="b">2008 金融海嘯</td><td class="n dn">−41.7%</td><td class="n dn">−55.5%</td><td class="n dn"><b>−16.9%</b>（最抗跌）</td><td class="n dn">約−43%</td><td class="n dn">−36.8%</td></tr>
-    <tr><td class="b">2020 疫情（全年）</td><td class="n up">+48.6%</td><td class="n up">+30.9%</td><td class="n up">+92.7%</td><td class="n up">約+31%</td><td class="n up">+18.3%</td></tr>
-    <tr><td class="b">2022 升息空頭</td><td class="n dn">−32.6%</td><td class="n dn">−39.1%</td><td class="n dn">−36.8%</td><td class="n dn">約−21.8%</td><td class="n dn">−18.2%</td></tr>
+    <tr><th>危機</th><th class="n">QQQ</th><th class="n">GOOGL</th><th class="n">台積電 2330</th><th class="n">0050</th><th class="n">SPY</th></tr>
+    <tr><td class="b">2000–02 網路泡沫（3 年累計）</td><td class="n dn"><b>−73%</b></td><td class="n">未上市</td><td class="n dn">約 −65%</td><td class="n">未上市</td><td class="n dn">−37.5%</td></tr>
+    <tr><td class="b">2008 金融海嘯</td><td class="n dn">−41.7%</td><td class="n dn">−55.5%</td><td class="n dn">約 −28%</td><td class="n dn">約−43%</td><td class="n dn">−36.8%</td></tr>
+    <tr><td class="b">2020 疫情（全年）</td><td class="n up">+48.6%</td><td class="n up">+30.9%</td><td class="n up">約 +60%</td><td class="n up">約+31%</td><td class="n up">+18.3%</td></tr>
+    <tr><td class="b">2022 升息空頭</td><td class="n dn">−32.6%</td><td class="n dn">−39.1%</td><td class="n dn">約 −27%</td><td class="n dn">約−21.8%</td><td class="n dn">−18.2%</td></tr>
   </table></div>
   <div class="note">2020 年 3 月一個月內全部急殺 25–30%，5–6 個月收復，全年反而大賺（V 型特例）。<br>
   回本時間：2000 高點 all-in 約 <b>15 年</b>（QQQ 至 2015）｜2008 高點約 3–4 年｜2022 高點約 2 年｜2020 疫情約 6 個月。<br>
-  最大回檔：QQQ −83%（2000–02）、GOOGL −65%（2008）、台積電 ADR −56%（2022）、SPY −55%（2008）。<br>
+  最大回檔：QQQ −83%（2000–02）、GOOGL −65%（2008）、台積電 2330 約 −46%（2022 高點 688→低 370）、SPY −55%（2008）。<br>
+  <b>註：</b>台積電 2330 為台股價格基準概估（早年含配股還原，僅供量級參考，非精確含息報酬）。<br>
   大盤對照：每次危機 SPY 都跌得比 QQQ 淺（2000–02 差距最大：−37.5% vs −73%）——分散產業的防禦價值在空頭才看得到；VTI／VOO 與 SPY 幾乎同步。</div>
 </section>
 
@@ -616,9 +617,12 @@ function recalcPlan(){
       const vi=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;inv+=vi;viMap[k]=vi;
       const fv=document.getElementById('fv_'+i+'_'+k);if(fv)fv.textContent=vi>0?'$'+f0(vi):'—';
       const fa=document.getElementById('fa_'+i+'_'+k);
-      if(fa){if(vi<=0){fa.textContent='—';fa.className='n b';}
-        else{const pc=tgtT>0?vi/tgtT*100:0;fa.textContent=pc.toFixed(0)+'%';
-          fa.className='n b '+(pc>=98?'dn':'');}}
+      if(fa){if(vi<=0){fa.innerHTML='—';fa.className='n b';}
+        else{const pc=tgtT>0?vi/tgtT*100:0;const ov=pc>=102;const gap=tgtT-vi;let tip;
+          if(gap<=0){tip=ov?('超買 NT$'+f0(-gap)):'✓ 已達本批目標';}
+          else{const pxN=curPrice(k);const px=(pxN&&pxN>0)?pxN:(getFill(i,k).p||0);const pxTWD=px*(us?fx:1);
+            if(pxTWD>0){const sh=gap/pxTWD;tip='還要買 ≈'+(us?sh.toFixed(2):Math.ceil(sh))+' 股（還差 NT$'+f0(gap)+(us?' / US$'+f0(gap/fx):'')+'）';}else tip='還差 NT$'+f0(gap);}
+          fa.innerHTML='<span class="tip'+(ov?' up':(pc>=98?' dn':''))+'" tabindex="0" data-tip="'+tip+'">'+pc.toFixed(0)+'%'+(ov?' 超買':'')+'</span>';fa.className='n b';}}
     });
     const ach=tgtB>0?inv/tgtB*100:0;
     /* 可視化：每檔一條「目標 vs 已買入」進度列 */
@@ -633,11 +637,10 @@ function recalcPlan(){
         const fillW=Math.min(pc,100);
         const fillC=over?'var(--up)':a[2];
         const nm=a[1].replace('台積電 ','').replace('元大 ','');
-        let tipTxt;{const gap=tgtT-vi;if(gap<=0){tipTxt=over?('超買 NT$'+f0(-gap)):'✓ 已達本批目標';}else{const pxN=curPrice(k);const px=(pxN&&pxN>0)?pxN:(getFill(i,k).p||0);const pxTWD=px*(us?fx:1);if(pxTWD>0){const sh=gap/pxTWD;tipTxt='還要買 ≈'+(us?sh.toFixed(2):Math.ceil(sh))+' 股（還差 NT$'+f0(gap)+(us?' / US$'+f0(gap/fx):'')+'，現價 '+(us?('US$'+f0(px)):('NT$'+f0(px)))+'）';}else{tipTxt='還差 NT$'+f0(gap)+'（尚無現價，請先按 ↻ 重新抓價）';}}}
         rows2+='<div class="prow">'+
           '<span class="pnm" style="color:'+a[2]+'">'+nm+'</span>'+
           '<span class="pbar"><div style="width:'+fillW+'%;background:'+fillC+'"></div></span>'+
-          '<span class="ppct tip"'+(over?' style="color:var(--up)"':(pc>=98?' style="color:var(--dn)"':''))+' tabindex="0" data-tip="'+tipTxt+'">'+pc.toFixed(0)+'%'+(over?' 超買':'')+'</span>'+
+          '<span class="ppct"'+(over?' style="color:var(--up)"':(pc>=98?' style="color:var(--dn)"':''))+'>'+pc.toFixed(0)+'%'+(over?' 超買':(pc>=98?' 達標':''))+'</span>'+
           '<span class="pamt">$'+f0(vi)+' / $'+f0(tgtT)+'</span></div>';
       });
       rows2+='<div class="prow" style="border-top:1px dashed var(--line);padding-top:7px;margin-top:8px">'+
@@ -716,10 +719,11 @@ function recalcHold(){
   if(pb){const fund2=gv('fund');const today=todayStr();
     let dueN=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=today)dueN++;});
     const expPct=dueN*25;const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
+    let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let bi=0;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)bi+=f.p*f.s*((a[3]==='us')?fx:1);});if(bi<fund2*0.25*0.97){nextI=i;nextD=S.dates[i];break;}}
     pb.innerHTML='<div style="margin:14px 0 4px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:4px">'+
       '<span style="display:flex;align-items:baseline;gap:10px"><span style="font-size:14.5px;font-weight:800">部位建置進度</span><b style="font-size:20px">'+actPct.toFixed(1)+'%</b><span class="mut" style="font-weight:700;font-size:13px">$'+f0(cost)+' / $'+f0(fund2)+'</span></span>'+
-      '<span class="mut" style="font-size:13px;font-weight:700">應達進度（第 '+dueN+' 批到期）<b style="color:var(--ink);font-size:15px;margin-left:6px">'+expPct+'%</b></span></div>'+
+      '<span class="mut" style="font-size:13px;font-weight:700">下一批建倉<b style="color:var(--ink);font-size:15px;margin-left:6px">'+(nextI<0?'已完成 ✓':('第 '+(nextI+1)+' 批 · '+nextD))+'</b></span></div>'+
       '<div style="position:relative;height:18px;border-radius:9px;background:var(--line);overflow:hidden">'+
       '<div style="position:absolute;left:0;top:0;bottom:0;width:'+Math.min(100,actPct)+'%;background:var(--accent);border-radius:9px"></div>'+
       '<div style="position:absolute;left:'+Math.min(100,expPct)+'%;top:-2px;bottom:-2px;width:3px;background:var(--up)"></div></div>'+
@@ -847,17 +851,16 @@ async function buildPnlChart(){
       cost.push(c);val.push(v);});
     if(!days.length){box.innerHTML='';return;}
     const W=720,H=240,PL=58,PR=14,PT=16,PB=26;
-    /* X 軸：自第 1 批買進日起固定一年；Y 軸：固定 0~300萬（資料超過才自動上調） */
-    const yStart=new Date(firstD+'T00:00:00'),yEnd=new Date(firstD+'T00:00:00');yEnd.setFullYear(yEnd.getFullYear()+1);
-    const YEARMS=yEnd-yStart;
-    const xOf=ds=>{const t=new Date(ds+'T00:00:00')-yStart;return PL+Math.max(0,Math.min(1,t/YEARMS))*(W-PL-PR);};
+    /* X 軸：只顯示當月；Y 軸：固定 0~300萬（資料超過才自動上調） */
+    const mStart=new Date(today.slice(0,7)+'-01T00:00:00'),mEnd=new Date(today.slice(0,7)+'-01T00:00:00');mEnd.setMonth(mEnd.getMonth()+1);
+    const SPAN=mEnd-mStart,mStartStr=today.slice(0,7)+'-01';
+    const xOf=ds=>{const t=new Date(ds+'T00:00:00')-mStart;return PL+Math.max(0,Math.min(1,t/SPAN))*(W-PL-PR);};
     let YMAX=3000000;const mxv=Math.max.apply(null,cost.concat(val).filter(x=>isFinite(x)));if(isFinite(mxv)&&mxv>YMAX)YMAX=Math.ceil(mxv*1.08/500000)*500000;
     const Y=v=>PT+(1-v/YMAX)*(H-PT-PB);
     const path=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
     let grid='';for(let g=0;g<=4;g++){const vv=YMAX*g/4,yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
-    let xticks='';const mm=new Date(yStart);mm.setDate(1);if(mm<yStart)mm.setMonth(mm.getMonth()+1);
-    for(;mm<=yEnd;mm.setMonth(mm.getMonth()+1)){const xx=PL+((mm-yStart)/YEARMS)*(W-PL-PR);if(xx<PL-0.5||xx>W-PR+0.5)continue;xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mm.getMonth()+1)+'月</text>';}
-    let marks='';PLAN_DEF.forEach((p,i)=>{const xx=xOf(S.dates[i]);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';});
+    let xticks='';const dim=new Date(mEnd.getTime()-1).getDate();[1,5,10,15,20,25,dim].forEach(dd=>{if(dd>dim)return;const dt=new Date(mStart);dt.setDate(dd);const xx=PL+((dt-mStart)/SPAN)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mStart.getMonth()+1)+'/'+dd+'</text>';});
+    let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
     const cNow=cost[cost.length-1],vNow=val[val.length-1],vline=vNow>=cNow?'#c0392b':'#0d9488';
     box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢（成本 vs 市值）</div>'+
       '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px">'+
