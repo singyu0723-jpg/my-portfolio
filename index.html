@@ -123,7 +123,7 @@ h2.sect{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:21px
 .sect .sbtn{position:static;margin-left:auto;flex:0 0 auto}
 .secbody{margin-top:12px}
 .mkstatus{background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:11.5px;color:var(--mut);font-weight:700;margin-left:10px;white-space:nowrap;letter-spacing:0}
-.mktctrl{margin-left:auto;display:flex;align-items:center;gap:10px}
+.mktctrl{margin-left:auto;display:flex;align-items:center;align-self:center;gap:10px}
 .mktctrl .mkstatus{margin-left:0}
 .mkrefresh{padding:4px 13px;font-size:12px;border-radius:99px}
 .smin{width:78px}
@@ -232,6 +232,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="tab on" id="tab-tool" onclick="showView('tool')">🛠 評估工具</div>
   <div class="tab" id="tab-assets" onclick="showView('assets')">💰 總資產配置</div>
   <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬率總表</div>
+  <span class="mktctrl" id="mktctrl"><span class="mkstatus" id="mkstatus">載入中…</span><button class="btn mkrefresh" onclick="fetchMkt()">↻ 重新抓價</button></span>
 </div>
 
 <div id="view-tool">
@@ -263,29 +264,28 @@ th,td{padding:6px 4px;font-size:12px}
     <div class="chip"><div class="l">台積電 2330 實質曝險</div><div class="v" id="tsmc_exp">—</div><div class="s"><span id="tsmc_amt">—</span>　·　2330 + 0050×57%</div></div>
     <div class="chip"><div class="l">Alphabet／GOOGL 實質曝險</div><div class="v" id="googl_exp">—</div><div class="s"><span id="googl_amt">—</span>　·　GOOGL + QQQ×~5% + VOO×~3.5%</div></div>
   </div>
-  <div class="note">「台美股比例」＝美股（QQQ＋VOO＋GOOGL）對台股（2330＋0050）。定稿：美:台 75:25、指數:個股 65:35。<b>實質曝險</b>把 ETF 內含成分也算進來（🟡估算，會隨指數調整變動）：台積電 ≈ 20.7%（>25% 提醒再平衡）；Alphabet ≈ 23%（>28% 提醒再平衡）。比例不含現金——現金與醫療備用金（台幣定存）獨立於本組合之外。</div>
 </section>
 
 <section class="slide">
   <h2 class="sect"><span class="num">②</span>部位建立<button class="resetbtn sbtn" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button></h2>
   <div id="batchwrap"></div>
-  <div id="exbox" style="margin-top:18px"></div>
+  <div id="progbox" style="margin-top:10px"></div>
+  <div id="exbox" style="margin-top:14px"></div>
 </section>
 
 <section class="slide">
   <h2 class="sect"><span class="num">③</span>損益</h2>
-  <div id="progbox"></div>
+  <div id="pnlbox"></div>
+  <div id="pnlchart"></div>
   <table class="ctr" style="margin-top:24px">
     <tr><th style="width:16%">標的</th><th style="width:12%">資產配置</th><th style="width:20%">持有部位</th><th style="width:18%">已投入</th><th style="width:14%">損益%</th><th style="width:20%">部位完成率</th></tr>
     <tbody id="holdbody"></tbody>
   </table>
-  <div id="pnlbox"></div>
-  <div id="pnlchart"></div>
 </section>
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('mkt')">
-    <h2 class="sect"><span class="num">④</span>多市場位階<span class="mktctrl" id="mktctrl"><span class="mkstatus" id="mkstatus">載入中…</span><button class="btn mkrefresh" onclick="event.stopPropagation();fetchMkt()">↻ 重新抓價</button></span><span class="caret" id="ca_mkt">▸</span></h2>
+    <h2 class="sect"><span class="num">④</span>多市場位階<span class="caret" id="ca_mkt">▸</span></h2>
   </div>
   <div class="secbody" id="sb_mkt">
   <div class="mgrid" id="mktgrid"></div>
@@ -573,8 +573,7 @@ let SECS={mkt:false,view:false,next:false};
 try{const sv2=JSON.parse(localStorage.getItem('erick_secs_v1'));if(sv2)SECS=Object.assign(SECS,sv2);}catch(e){}
 function applySecs(){['mkt','view','next'].forEach(s=>{
   const b=document.getElementById('sb_'+s);if(b)b.style.display=SECS[s]?'':'none';
-  const c=document.getElementById('ca_'+s);if(c)c.textContent=SECS[s]?'▾':'▸';});
-  const mc=document.getElementById('mktctrl');if(mc)mc.style.display=SECS.mkt?'':'none';}
+  const c=document.getElementById('ca_'+s);if(c)c.textContent=SECS[s]?'▾':'▸';});}
 function toggleSec(s){SECS[s]=!SECS[s];try{localStorage.setItem('erick_secs_v1',JSON.stringify(SECS));}catch(e){}applySecs();}
 function buildPlan(){
   const w=document.getElementById('batchwrap');w.innerHTML='';
@@ -737,7 +736,7 @@ function recalcHold(){
       '<div style="position:absolute;left:0;top:0;bottom:0;width:'+Math.min(100,actPct)+'%;background:var(--accent);border-radius:9px"></div>'+
       '<div style="position:absolute;left:'+Math.min(100,expPct)+'%;top:-2px;bottom:-2px;width:3px;background:var(--up)"></div></div>'+
       '<div style="font-size:13px;margin-top:7px;font-weight:700;color:'+(lag>=-2?'var(--dn)':'var(--amb)')+'">'+
-      (lag>=-2?'✓ 進度正常（'+(lag>=0?'+':'')+lag.toFixed(1)+'pp）':'⚠ 落後應達進度 '+(-lag).toFixed(1)+'pp — 紅線是現在該到的位置')+'</div></div>';}
+      (lag>=-2?'✓ 進度正常（'+(lag>=0?'+':'')+lag.toFixed(1)+'%）':'⚠ 落後應達進度 '+(-lag).toFixed(1)+'%')+'</div></div>';}
   const exbox=document.getElementById('exbox');
   const box=document.getElementById('pnlbox');if(!box)return;
   if(cost<=0||val<=0){box.innerHTML='<div class="note" style="border:none;padding-top:2px">填入各標的成交均價與股數後，自動計算已投入、達成率、損益與例外條款。</div>';if(exbox)exbox.innerHTML='';return;}
@@ -747,7 +746,7 @@ function recalcHold(){
     '<div class="pnlcell"><span class="pl">市值</span><b>$'+f0(val)+'</b></div>'+
     '<div class="pnlcell"><span class="pl">損益</span><b style="color:'+plc+'">'+(pnl>=0?'+':'−')+'$'+f0(Math.abs(pnl))+'</b></div>'+
     '<div class="pnlcell"><span class="pl">報酬率</span><b style="color:'+plc+'">'+(port>=0?'+':'')+port.toFixed(1)+'%</b></div></div></div>';
-  if(exbox)exbox.innerHTML=(port<=-10?'<div class="warnbox">🚨 例外條款觸發：組合相對成本 '+port.toFixed(1)+'%（≤ −10%）→ 立即提前執行下一批！（後續日期不變）</div>':'<div class="okbox">✓ 未觸發例外條款（距 −10% 門檻還有 '+(port+10).toFixed(1)+'pp）</div>');
+  if(exbox)exbox.innerHTML=(port<=-10?'<div class="warnbox">🚨 例外條款觸發：組合相對成本 '+port.toFixed(1)+'%（≤ −10%）→ 立即提前執行下一批！（後續日期不變）</div>':'<div class="okbox">✓ 未觸發例外條款（距 −10% 門檻還有 '+(port+10).toFixed(1)+'%）</div>');
 }
 function resetPlan(){
   if(!confirm('重設分批計畫的日期與所有買入紀錄？'))return;
@@ -871,7 +870,7 @@ async function buildPnlChart(){
     let xticks='';const dim=new Date(mEnd.getTime()-1).getDate();[1,5,10,15,20,25,dim].forEach(dd=>{if(dd>dim)return;const dt=new Date(mStart);dt.setDate(dd);const xx=PL+((dt-mStart)/SPAN)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mStart.getMonth()+1)+'/'+dd+'</text>';});
     let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
     const cNow=cost[cost.length-1],vNow=val[val.length-1],vline=vNow>=cNow?'#c0392b':'#0d9488';
-    box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢（成本 vs 市值）</div>'+
+    box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢</div>'+
       '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px">'+
         grid+xticks+marks+
         '<path d="'+path(cost)+'" fill="none" stroke="#bd8420" stroke-width="2" stroke-dasharray="6 4"/>'+
