@@ -138,7 +138,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .pli .pp{font-weight:800;font-variant-numeric:tabular-nums;width:54px;text-align:right}
 .pli .pa{color:var(--mut);font-weight:700;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
 .twopie{display:flex;gap:16px;flex-wrap:wrap}
-.pieCol{flex:1;min-width:290px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px 16px}
+.pieCol{position:relative;flex:1;min-width:290px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px 16px}
 .pieColT{font-size:13.5px;font-weight:800;color:var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .pieColTot{font-size:13px;font-weight:800;color:var(--mut);font-variant-numeric:tabular-nums}
 .pieCol .pieWrap{padding:24px 0 20px}
@@ -154,6 +154,15 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .pieinfo{min-height:22px;text-align:center;font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:7px;margin:2px 0;flex-wrap:wrap}
 .pieinfo .pd{width:12px;height:12px;border-radius:4px;display:inline-block}
 .pieinfo .hint{color:var(--mut);font-weight:600}
+.pietip{position:absolute;left:0;top:0;transform:translate(-50%,-118%);background:var(--ink);color:#fffdf8;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:40;display:flex;align-items:center;gap:7px}
+.pietip .pd{width:11px;height:11px;border-radius:3px}
+.pnlcard{margin:8px 0 2px}
+.pnlnums{display:flex;gap:10px;flex-wrap:wrap}
+.pnlcell{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 13px;display:flex;flex-direction:column;gap:2px}
+.pnlcell .pl{font-size:12px;color:var(--mut);font-weight:800}
+.pnlcell b{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+.exok{font-size:13px;font-weight:700;color:var(--dn);background:rgba(15,157,99,.08);border:1px solid rgba(15,157,99,.3);border-radius:10px;padding:8px 12px;margin:10px 0 0}
+@media(max-width:680px){.pnlcell{min-width:0;flex-basis:calc(50% - 5px)}.pnlcell b{font-size:17px}}
 .stage2{width:100%;border-collapse:collapse;margin:8px 0 2px;font-variant-numeric:tabular-nums}
 .stage2 th,.stage2 td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px}
 .stage2 thead th{font-size:12px;color:var(--mut);font-weight:800;text-align:right;border-bottom:2px solid var(--line)}
@@ -260,7 +269,6 @@ th,td{padding:6px 4px;font-size:12px}
   </table>
   <div id="pnlbox"></div>
   <div id="pnlchart"></div>
-  <div class="note">此表<b>自動彙總上方各批次填的買入</b>（平均成本＝全部批次加權平均），不用重複輸入。美股以美元計價，台幣金額用上方匯率換算。<b>應達進度</b>＝已到期批次數×25%；組合損益＝現值合計÷成本合計−1，<b>觸及 −10% → 立即提前執行下一批，後續日期不變。</b>所有輸入存在這台電腦的瀏覽器裡。</div>
 </section>
 
 <section class="slide">
@@ -329,14 +337,14 @@ th,td{padding:6px 4px;font-size:12px}
       <div class="pieColT">貸款前 · 階段一（僅自有資金）<span class="pieColTot" id="as_tot_a"></span></div>
       <div id="as_cat_a"></div>
       <div class="svgpie" id="as_pie_a"></div>
-      <div class="pieinfo" id="as_pieinfo_a"></div>
+      <div class="pietip" id="as_pietip_a"></div>
       <div class="pielegend" id="as_legend_a"></div>
     </div>
     <div class="pieCol">
       <div class="pieColT">貸款後 · 階段二（自有＋貸款）<span class="pieColTot" id="as_tot_b"></span></div>
       <div id="as_cat_b"></div>
       <div class="svgpie" id="as_pie_b"></div>
-      <div class="pieinfo" id="as_pieinfo_b"></div>
+      <div class="pietip" id="as_pietip_b"></div>
       <div class="pielegend" id="as_legend_b"></div>
     </div>
   </div>
@@ -620,7 +628,7 @@ function recalcPlan(){
         const tgtT=tgtB*A[k]/hold;
         const vi=viMap[k]||0;
         const pc=tgtT>0?vi/tgtT*100:0;
-        const over=pc>102;
+        const over=pc>=102;
         const fillW=Math.min(pc,100);
         const fillC=over?'var(--up)':a[2];
         const nm=a[1].replace('台積電 ','').replace('元大 ','');
@@ -693,8 +701,12 @@ function recalcHold(){
       else{pe.textContent='—';pe.className='n b';}}
     const ach2=tgt>0?inv/tgt*100:0;const diff=tgt-inv;
     const ae2=document.getElementById('ach_'+k);
-    if(ae2){const tipTxt='目標 $'+f0(tgt)+(ach2>102?'｜超買 $'+f0(-diff):(ach2>=98?'｜✓ 達標':'｜還差 $'+f0(diff)));
-      ae2.innerHTML='<span class="tip'+(ach2>102?' up':(ach2>=98?' dn':''))+'" tabindex="0" data-tip="'+tipTxt+'">'+ach2.toFixed(0)+'%</span>';
+    if(ae2){const over=ach2>=102;let tip;
+      if(diff<=0){tip='目標 $'+f0(tgt)+'｜超買 $'+f0(-diff);}
+      else{const pxTWD=(isFinite(cur)&&cur>0)?cur*mult:0;
+        if(pxTWD>0){const shn=diff/pxTWD;tip='還要買 ≈'+(us?shn.toFixed(2):Math.ceil(shn))+' 股（還差 NT$'+f0(diff)+(us?' / US$'+f0(diff/fx):'')+'，現價 '+(us?('US$'+f0(cur)):('NT$'+f0(cur)))+'）';}
+        else tip='目標 $'+f0(tgt)+'｜還差 $'+f0(diff)+'（尚無現價，請先 ↻ 抓價）';}
+      ae2.innerHTML='<span class="tip'+(over?' up':(ach2>=98?' dn':''))+'" tabindex="0" data-tip="'+tip+'">'+ach2.toFixed(0)+'%'+(over?' 超買':'')+'</span>';
       ae2.className='n b';}
     if(inv>0){cost+=inv;val+=cv;}
   });
@@ -714,9 +726,14 @@ function recalcHold(){
       (lag>=-2?'✓ 進度正常（'+(lag>=0?'+':'')+lag.toFixed(1)+'pp）':'⚠ 落後應達進度 '+(-lag).toFixed(1)+'pp — 紅線是現在該到的位置')+'</div></div>';}
   const box=document.getElementById('pnlbox');if(!box)return;
   if(cost<=0||val<=0){box.innerHTML='<div class="note" style="border:none;padding-top:2px">填入各標的成交均價與股數後，自動計算已投入、達成率、損益與例外條款。</div>';return;}
-  const port=(val/cost-1)*100;
-  if(port<=-10)box.innerHTML='<div class="warnbox">🚨 例外條款觸發：組合相對成本 '+port.toFixed(1)+'%（≤ −10%）→ 立即提前執行下一批！（後續日期不變）</div>';
-  else box.innerHTML='<div class="okbox">組合損益：'+(port>=0?'+':'')+port.toFixed(1)+'%（成本 $'+f0(cost)+' → 現值 $'+f0(val)+'）— 未觸發例外條款（門檻 −10%）。</div>';
+  const port=(val/cost-1)*100;const pnl=val-cost;const plc=pnl>=0?'var(--up)':'var(--dn)';
+  box.innerHTML='<div class="pnlcard"><div class="pnlnums">'+
+    '<div class="pnlcell"><span class="pl">成本</span><b>$'+f0(cost)+'</b></div>'+
+    '<div class="pnlcell"><span class="pl">市值</span><b>$'+f0(val)+'</b></div>'+
+    '<div class="pnlcell"><span class="pl">損益</span><b style="color:'+plc+'">'+(pnl>=0?'+':'−')+'$'+f0(Math.abs(pnl))+'</b></div>'+
+    '<div class="pnlcell"><span class="pl">報酬率</span><b style="color:'+plc+'">'+(port>=0?'+':'')+port.toFixed(1)+'%</b></div></div>'+
+    (port<=-10?'<div class="warnbox" style="margin:10px 0 0">🚨 例外條款觸發：組合相對成本 '+port.toFixed(1)+'%（≤ −10%）→ 立即提前執行下一批！（後續日期不變）</div>':'<div class="exok">✓ 未觸發例外條款（距 −10% 門檻還有 '+(port+10).toFixed(1)+'pp）</div>')+
+    '</div>';
 }
 function resetPlan(){
   if(!confirm('重設分批計畫的日期與所有買入紀錄？'))return;
@@ -827,38 +844,37 @@ async function buildPnlChart(){
       items.forEach(it=>{let sh=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds){const f=getFill(i,it.k);if(f.p>0&&f.s>0)sh+=f.s;}});
         if(sh>0){let px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0)v+=px*sh*(it.us?fx:1);}});
       cost.push(c);val.push(v);});
-    const n=days.length,W=720,H=240,PL=58,PR=14,PT=16,PB=26;
-    const allv=cost.concat(val).filter(x=>isFinite(x)&&x>0);
-    if(!allv.length){box.innerHTML='';return;}
-    let mn=Math.min.apply(null,allv),mx=Math.max.apply(null,allv);
-    const pad=(mx-mn)*0.12||mx*0.05||1000;mn=Math.max(0,mn-pad);mx=mx+pad;
-    const X=i=>PL+(n<=1?0:i/(n-1)*(W-PL-PR));
-    const Y=v=>PT+(1-(v-mn)/(mx-mn||1))*(H-PT-PB);
-    const path=arr=>arr.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
-    let grid='';for(let g=0;g<=4;g++){const vv=mn+(mx-mn)*g/4,yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
-    let marks='';PLAN_DEF.forEach((p,i)=>{const di=days.indexOf(S.dates[i]);if(di>=0){const xx=X(di);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>';}});
-    const xl='<text x="'+PL+'" y="'+(H-8)+'" font-size="10" fill="#9a8f7a">'+days[0].slice(5)+'</text><text x="'+(W-PR)+'" y="'+(H-8)+'" text-anchor="end" font-size="10" fill="#9a8f7a">'+days[n-1].slice(5)+'</text>';
-    const cNow=cost[n-1],vNow=val[n-1],pl=vNow-cNow,plp=cNow>0?(vNow/cNow-1)*100:0,plc=pl>=0?'#c0392b':'#0d9488',vline=vNow>=cNow?'#c0392b':'#0d9488';
+    if(!days.length){box.innerHTML='';return;}
+    const W=720,H=240,PL=58,PR=14,PT=16,PB=26;
+    /* X 軸：自第 1 批買進日起固定一年；Y 軸：固定 0~300萬（資料超過才自動上調） */
+    const yStart=new Date(firstD+'T00:00:00'),yEnd=new Date(firstD+'T00:00:00');yEnd.setFullYear(yEnd.getFullYear()+1);
+    const YEARMS=yEnd-yStart;
+    const xOf=ds=>{const t=new Date(ds+'T00:00:00')-yStart;return PL+Math.max(0,Math.min(1,t/YEARMS))*(W-PL-PR);};
+    let YMAX=3000000;const mxv=Math.max.apply(null,cost.concat(val).filter(x=>isFinite(x)));if(isFinite(mxv)&&mxv>YMAX)YMAX=Math.ceil(mxv*1.08/500000)*500000;
+    const Y=v=>PT+(1-v/YMAX)*(H-PT-PB);
+    const path=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    let grid='';for(let g=0;g<=4;g++){const vv=YMAX*g/4,yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
+    let xticks='';const mm=new Date(yStart);mm.setDate(1);if(mm<yStart)mm.setMonth(mm.getMonth()+1);
+    for(;mm<=yEnd;mm.setMonth(mm.getMonth()+1)){const xx=PL+((mm-yStart)/YEARMS)*(W-PL-PR);if(xx<PL-0.5||xx>W-PR+0.5)continue;xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mm.getMonth()+1)+'月</text>';}
+    let marks='';PLAN_DEF.forEach((p,i)=>{const xx=xOf(S.dates[i]);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';});
+    const cNow=cost[cost.length-1],vNow=val[val.length-1],vline=vNow>=cNow?'#c0392b':'#0d9488';
     box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢（成本 vs 市值）</div>'+
-      '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;margin:2px 0 7px">'+
-        '<span style="font-size:13px;font-weight:700;color:var(--mut)">成本 <b style="color:var(--ink);font-size:15px">$'+f0(cNow)+'</b></span>'+
-        '<span style="font-size:13px;font-weight:700;color:var(--mut)">市值 <b style="color:var(--ink);font-size:15px">$'+f0(vNow)+'</b></span>'+
-        '<span style="font-size:13px;font-weight:700;color:var(--mut)">損益 <b style="color:'+plc+';font-size:15px">'+(pl>=0?'+':'−')+'$'+f0(Math.abs(pl))+'（'+(plp>=0?'+':'')+plp.toFixed(1)+'%）</b></span>'+
-      '</div>'+
       '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px">'+
-        grid+marks+
+        grid+xticks+marks+
         '<path d="'+path(cost)+'" fill="none" stroke="#bd8420" stroke-width="2" stroke-dasharray="6 4"/>'+
-        '<path d="'+path(val)+'" fill="none" stroke="'+vline+'" stroke-width="2.5"/>'+xl+
+        '<path d="'+path(val)+'" fill="none" stroke="'+vline+'" stroke-width="2.5"/>'+
       '</svg>'+
-      '<div class="catrow" style="margin-top:8px"><span><b style="color:#bd8420">▬▬</b> 成本（累計投入，逐批墊高）</span><span><b style="color:'+vline+'">▬▬</b> 市值（持股×當日收盤）</span></div>'+
-      '<div class="note" style="border:none;padding-top:4px;font-size:11.5px">曲線以各標的每日歷史收盤重建，從第 1 批買進日（'+firstD+'）起算；假設每批股數於批次日當天買進、匯率固定 '+fx+'。垂直虛線為各批次執行日。</div>';
+      '<div class="catrow" style="margin-top:8px"><span><b style="color:#bd8420">▬▬</b> 成本（累計投入，逐批墊高）</span><span><b style="color:'+vline+'">▬▬</b> 市值（持股×當日收盤）</span></div>';
   }finally{pnlBusy=false;}
 }
 document.getElementById('fund').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 document.getElementById('fx').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 /* 互動圓餅工具（slice 路徑 + hover/點擊浮資訊） */
 function pieSlicePath(cx,cy,r,a0,a1){var pt=function(a){var rad=(a-90)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];};if(a1-a0>=359.999){return 'M'+(cx-r)+' '+cy+' A'+r+' '+r+' 0 1 1 '+(cx+r)+' '+cy+' A'+r+' '+r+' 0 1 1 '+(cx-r)+' '+cy+' Z';}var s=pt(a0),e=pt(a1),lg=(a1-a0)>180?1:0;return 'M'+cx+' '+cy+' L'+s[0].toFixed(2)+' '+s[1].toFixed(2)+' A'+r+' '+r+' 0 '+lg+' 1 '+e[0].toFixed(2)+' '+e[1].toFixed(2)+' Z';}
-function pieInfo(sfx,i){var arr=(window.PIEDATA||{})[sfx];if(!arr)return;var s=arr[i];var el=document.getElementById('as_pieinfo_'+sfx);if(el&&s)el.innerHTML='<span class="pd" style="background:'+s.color+'"></span><b>'+s.name+'</b>　'+s.pct.toFixed(1)+'%　$'+f0(s.amt);}
+function pieShow(sfx,i){var arr=(window.PIEDATA||{})[sfx];if(!arr)return;var s=arr[i];var t=document.getElementById('as_pietip_'+sfx);if(t&&s){t.innerHTML='<span class="pd" style="background:'+s.color+'"></span><b>'+s.name+'</b> '+s.pct.toFixed(1)+'% · $'+f0(s.amt);t.style.opacity='1';}}
+function pieMove(e,sfx){var t=document.getElementById('as_pietip_'+sfx);if(!t)return;var host=t.parentNode,r=host.getBoundingClientRect();t.style.left=(e.clientX-r.left)+'px';t.style.top=(e.clientY-r.top)+'px';}
+function pieHide(sfx){var t=document.getElementById('as_pietip_'+sfx);if(t)t.style.opacity='0';}
+function pieTap(e,sfx,i){pieShow(sfx,i);pieMove(e,sfx);}
 /* ───────── 💰 總資產配置 ───────── */
 function recalcAssets(){
   const own=gv('as_own'),loan=gv('as_loan'),res=gv('as_res');
@@ -892,10 +908,9 @@ function recalcAssets(){
     window.PIEDATA=window.PIEDATA||{};window.PIEDATA[sfx]=slices;
     let ang=0,paths='';
     slices.forEach((s,si)=>{if(s.pct<=0)return;const a0=ang,a1=ang+s.pct/100*360;ang=a1;
-      paths+='<path d="'+pieSlicePath(100,66,58,a0,a1)+'" fill="'+s.color+'" stroke="#fff8ee" stroke-width="1" style="cursor:pointer" onmouseenter="pieInfo(\''+sfx+'\','+si+')" onclick="pieInfo(\''+sfx+'\','+si+')"/>';});
+      paths+='<path d="'+pieSlicePath(100,66,58,a0,a1)+'" fill="'+s.color+'" stroke="#fff8ee" stroke-width="1" style="cursor:pointer" onmouseenter="pieShow(\''+sfx+'\','+si+')" onmousemove="pieMove(event,\''+sfx+'\')" onmouseleave="pieHide(\''+sfx+'\')" onclick="pieTap(event,\''+sfx+'\','+si+')"/>';});
     const pe=document.getElementById('as_pie_'+sfx);
     if(pe)pe.innerHTML='<svg viewBox="0 0 200 140" role="img" aria-label="資產分布圓餅"><ellipse cx="100" cy="78" rx="58" ry="36" fill="#b3a489"/><g transform="translate(100 66) scale(1 0.62) translate(-100 -66)">'+paths+'</g></svg>';
-    const inf=document.getElementById('as_pieinfo_'+sfx);if(inf)inf.innerHTML='<span class="hint">滑鼠移／手機點切片看明細</span>';
     const le=document.getElementById('as_legend_'+sfx);if(le)le.innerHTML=lg;
     const cats=[['現股',stk,'#127a6b'],['ETF',etf,'#caa23c'],['現金',cashAmt,'#8a7b63']];
     let cb='';cats.forEach(c=>{const pct=gd>0?c[1]/gd*100:0;if(pct<=0)return;
