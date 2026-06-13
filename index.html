@@ -166,6 +166,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .dptot{font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:3px}
 .dptot b{color:var(--ink)}
 .dpnote{font-size:11px;color:var(--mut);font-weight:600;margin-top:3px}
+#as_bar_a,#as_bar_b{height:50px}
 @media(max-width:680px){#assetfund{grid-template-columns:max-content 1fr}}
 @media(max-width:680px){.pnlcell{min-width:0;flex-basis:calc(50% - 5px)}.pnlcell b{font-size:17px}}
 .stage2{width:100%;border-collapse:collapse;margin:8px 0 2px;font-variant-numeric:tabular-nums}
@@ -247,7 +248,7 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">①</span>資金與配置<span class="hint">拖滑桿調比例，金額即時換算</span><button class="resetbtn sbtn" onclick="resetAlloc()">↺ 重設配置</button></h2>
+  <h2 class="sect"><span class="num">①</span>資金與配置<button class="resetbtn sbtn" onclick="resetAlloc()">↺ 重設配置</button></h2>
   <div class="barlbl" style="margin-top:8px">配置總覽</div>
   <div class="bar" id="allocbar" style="height:50px"></div>
   <div class="barlbl">市場分布</div>
@@ -263,12 +264,12 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">②</span>部位建立<span class="hint">4 批 × 25% 機械式 · 到點就買、不擇時</span><button class="resetbtn sbtn" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button></h2>
+  <h2 class="sect"><span class="num">②</span>部位建立<button class="resetbtn sbtn" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button></h2>
   <div id="batchwrap"></div>
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">③</span>損益<span class="hint">持倉追蹤 · 達成率 · 例外條款 · 走勢</span></h2>
+  <h2 class="sect"><span class="num">③</span>損益</h2>
   <div id="progbox"></div>
   <table class="ctr" style="margin-top:24px">
     <tr><th style="width:16%">標的</th><th style="width:12%">資產配置</th><th style="width:20%">持有部位</th><th style="width:18%">已投入</th><th style="width:14%">損益%</th><th style="width:20%">部位完成率</th></tr>
@@ -280,18 +281,17 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('mkt')">
-    <h2 class="sect"><span class="num">④</span>多市場位階<span class="mkstatus" id="mkstatus">載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
+    <h2 class="sect"><span class="num">④</span>多市場位階<span class="mkstatus" id="mkstatus" style="margin-left:auto">載入中…</span><button class="btn" onclick="event.stopPropagation();fetchMkt()" style="padding:4px 12px;font-size:12px;border-radius:99px;align-self:center">↻ 重新抓價</button><span class="caret" id="ca_mkt">▸</span></h2>
   </div>
   <div class="secbody" id="sb_mkt">
   <div class="mgrid" id="mktgrid"></div>
-  <div style="margin-top:10px"><button class="btn" onclick="fetchMkt()">↻ 重新抓價</button></div>
   <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
   </div>
 </section>
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('view')">
-    <h2 class="sect"><span class="num">⑤</span>觀點與風險<span class="hint">已對齊的判斷</span><span class="caret" id="ca_view">▸</span></h2>
+    <h2 class="sect"><span class="num">⑤</span>觀點與風險<span class="caret" id="ca_view">▸</span></h2>
   </div>
   <div class="secbody" id="sb_view">
   <ul>
@@ -307,7 +307,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('next')">
-    <h2 class="sect"><span class="num">⑥</span>下一步<span class="hint">接下來這樣做</span><span class="caret" id="ca_next">▸</span></h2>
+    <h2 class="sect"><span class="num">⑥</span>下一步<span class="caret" id="ca_next">▸</span></h2>
   </div>
   <div class="secbody" id="sb_next">
   <ul>
@@ -325,7 +325,7 @@ th,td{padding:6px 4px;font-size:12px}
 <div id="view-assets" style="display:none">
 
 <section class="slide">
-  <h2 class="sect"><span class="num">💰</span>總資產配置<span class="hint">自有＋貸款，投資與現金的全貌</span></h2>
+  <h2 class="sect"><span class="num">💰</span>總資產配置</h2>
   <div class="fundbox" id="assetfund">
     <label>自有現金</label><input type="number" id="as_own" value="2000000" step="100000" min="0">
     <label>貸款金額</label><input type="number" id="as_loan" value="1500000" step="100000" min="0">
@@ -339,7 +339,6 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="srcbar" id="as_bar_a"></div>
   <div class="dptot" style="margin-top:9px">貸款後 · 總資金 <b id="as_tot_bb">—</b></div>
   <div class="srcbar" id="as_bar_b"></div>
-  <div class="dpnote">前＝貸款前（自有資金）・後＝貸款後（貸款新增）</div>
 
   <div class="barlbl">資金來源</div>
   <div class="srcbar" id="as_srcbar"></div>
@@ -348,14 +347,14 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="barlbl" style="margin-top:18px">總資產分布</div>
   <div class="twopie">
     <div class="pieCol">
-      <div class="pieColT">貸款前 · 階段一（僅自有資金）<span class="pieColTot" id="as_tot_a"></span></div>
+      <div class="pieColT">貸款前 · 階段一<span class="pieColTot" id="as_tot_a"></span></div>
       <div id="as_cat_a"></div>
       <div class="svgpie" id="as_pie_a"></div>
       <div class="pietip" id="as_pietip_a"></div>
       <div class="pielegend" id="as_legend_a"></div>
     </div>
     <div class="pieCol">
-      <div class="pieColT">貸款後 · 階段二（自有＋貸款）<span class="pieColTot" id="as_tot_b"></span></div>
+      <div class="pieColT">貸款後 · 階段二<span class="pieColTot" id="as_tot_b"></span></div>
       <div id="as_cat_b"></div>
       <div class="svgpie" id="as_pie_b"></div>
       <div class="pietip" id="as_pietip_b"></div>
@@ -371,7 +370,7 @@ th,td{padding:6px 4px;font-size:12px}
 <div id="view-returns" style="display:none">
 
 <section class="slide">
-  <h2 class="sect">累積報酬率<span class="hint">含息再投入 · 含大盤對照</span></h2>
+  <h2 class="sect">累積報酬率</h2>
   <div class="note" style="border:none;margin:2px 0 4px;padding-top:2px"><b>互比標的</b>：
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t31" data-c="1" checked> QQQ</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t31" data-c="2" checked> GOOGL</label>
@@ -391,7 +390,7 @@ th,td{padding:6px 4px;font-size:12px}
     <tr><td class="b">20 年</td><td class="n up">+1,905%</td><td class="n up">+3,363%</td><td class="n up">約+6,800%</td><td class="n up">約+1,368%</td><td class="n">—</td><td class="n up">+737%</td><td class="n up">+746%</td></tr>
   </table></div>
 
-  <h2 class="sect" style="margin-top:26px">年化報酬率<span class="hint">含息再投入 · 含大盤對照</span></h2>
+  <h2 class="sect" style="margin-top:26px">年化報酬率</h2>
   <div class="note" style="border:none;margin:2px 0 4px;padding-top:2px"><b>互比標的</b>：
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t32" data-c="1" checked> QQQ</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t32" data-c="2" checked> GOOGL</label>
@@ -414,7 +413,7 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect">四次大型危機<span class="hint">含息 · 2330/0050 為台股 · 回本見表下附註</span></h2>
+  <h2 class="sect">四次大型危機</h2>
   <div class="note" style="border:none;margin:2px 0 4px;padding-top:2px"><b>互比標的</b>：
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="1" checked> QQQ</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="t4" data-c="2" checked> GOOGL</label>
@@ -437,7 +436,7 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect">逐年報酬率 2000–2026<span class="hint">含息 · 附該年重大事件</span></h2>
+  <h2 class="sect">逐年報酬率 2000–2026</h2>
   <div class="note" style="border:none;margin:2px 0 4px;padding-top:2px"><b>互比標的</b>：
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="annual" data-c="1" checked> QQQ</label>
     <label style="margin-right:11px;white-space:nowrap"><input type="checkbox" class="colck" data-t="annual" data-c="2" checked> GOOGL</label>
