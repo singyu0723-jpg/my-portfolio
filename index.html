@@ -165,6 +165,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 #assetfund{display:grid;grid-template-columns:max-content minmax(80px,1fr) max-content minmax(80px,1fr);gap:9px 14px;align-items:center}
 .dptot{font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:3px}
 .dptot b{color:var(--ink)}
+.dpnote{font-size:11px;color:var(--mut);font-weight:600;margin-top:3px}
 @media(max-width:680px){#assetfund{grid-template-columns:max-content 1fr}}
 @media(max-width:680px){.pnlcell{min-width:0;flex-basis:calc(50% - 5px)}.pnlcell b{font-size:17px}}
 .stage2{width:100%;border-collapse:collapse;margin:8px 0 2px;font-variant-numeric:tabular-nums}
@@ -264,8 +265,10 @@ th,td{padding:6px 4px;font-size:12px}
 <section class="slide">
   <h2 class="sect"><span class="num">②</span>部位建立<span class="hint">4 批 × 25% 機械式 · 到點就買、不擇時</span><button class="resetbtn sbtn" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button></h2>
   <div id="batchwrap"></div>
+</section>
 
-  <h2 class="sect" style="margin-top:46px;font-size:17px">持倉追蹤<span class="hint">買入達成率 · 例外條款監測</span></h2>
+<section class="slide">
+  <h2 class="sect"><span class="num">③</span>損益<span class="hint">持倉追蹤 · 達成率 · 例外條款 · 走勢</span></h2>
   <div id="progbox"></div>
   <table class="ctr" style="margin-top:24px">
     <tr><th style="width:16%">標的</th><th style="width:12%">資產配置</th><th style="width:20%">持有部位</th><th style="width:18%">已投入</th><th style="width:14%">損益%</th><th style="width:20%">部位完成率</th></tr>
@@ -277,7 +280,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('mkt')">
-    <h2 class="sect"><span class="num">③</span>多市場位階<span class="mkstatus" id="mkstatus">載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
+    <h2 class="sect"><span class="num">④</span>多市場位階<span class="mkstatus" id="mkstatus">載入中…</span><span class="caret" id="ca_mkt">▸</span></h2>
   </div>
   <div class="secbody" id="sb_mkt">
   <div class="mgrid" id="mktgrid"></div>
@@ -288,7 +291,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('view')">
-    <h2 class="sect"><span class="num">④</span>觀點與風險<span class="hint">已對齊的判斷</span><span class="caret" id="ca_view">▸</span></h2>
+    <h2 class="sect"><span class="num">⑤</span>觀點與風險<span class="hint">已對齊的判斷</span><span class="caret" id="ca_view">▸</span></h2>
   </div>
   <div class="secbody" id="sb_view">
   <ul>
@@ -304,7 +307,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('next')">
-    <h2 class="sect"><span class="num">⑤</span>下一步<span class="hint">接下來這樣做</span><span class="caret" id="ca_next">▸</span></h2>
+    <h2 class="sect"><span class="num">⑥</span>下一步<span class="hint">接下來這樣做</span><span class="caret" id="ca_next">▸</span></h2>
   </div>
   <div class="secbody" id="sb_next">
   <ul>
@@ -336,6 +339,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="srcbar" id="as_bar_a"></div>
   <div class="dptot" style="margin-top:9px">貸款後 · 總資金 <b id="as_tot_bb">—</b></div>
   <div class="srcbar" id="as_bar_b"></div>
+  <div class="dpnote">前＝貸款前（自有資金）・後＝貸款後（貸款新增）</div>
 
   <div class="barlbl">資金來源</div>
   <div class="srcbar" id="as_srcbar"></div>
@@ -928,7 +932,9 @@ function recalcAssets(){
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   set('as_tot_aa','$'+f0(own));set('as_tot_bb','$'+f0(total));
   const dbar=(id,tot,iv,cs)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML='';[['投資',iv,'#0d9488'],['現金',cs,'#8a7b63']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(tot,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(tot>0?(+(g[1]/tot*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});};
-  dbar('as_bar_a',own,p1,p1cash);dbar('as_bar_b',total,invest,res);
+  dbar('as_bar_a',own,p1,p1cash);
+  (function(){const el=document.getElementById('as_bar_b');if(!el)return;el.innerHTML='';
+    [['投資·前',p1,'#0d9488'],['投資·後',p2,'#5cb5a8'],['現金·前',p1cash,'#8a7b63'],['現金·後',Math.max(0,res-p1cash),'#b3a489']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(total,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});})();
   const w=document.getElementById('as_warn');
   if(w){let msg='';
     if(p1cash<res)msg+='<div class="warnbox">⚠ 第一階段現金 $'+f0(p1cash)+' 低於醫療保留目標 $'+f0(res)+'（缺 $'+f0(res-p1cash)+'）— 貸款到位前若急用需賣出投資。</div>';
