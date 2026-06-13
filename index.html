@@ -137,6 +137,16 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .pli .pn{font-weight:800;flex:0 0 auto;min-width:96px}
 .pli .pp{font-weight:800;font-variant-numeric:tabular-nums;width:54px;text-align:right}
 .pli .pa{color:var(--mut);font-weight:700;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.twopie{display:flex;gap:16px;flex-wrap:wrap}
+.pieCol{flex:1;min-width:290px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px 16px}
+.pieColT{font-size:13.5px;font-weight:800;color:var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pieColTot{font-size:13px;font-weight:800;color:var(--mut);font-variant-numeric:tabular-nums}
+.pieCol .pieWrap{padding:24px 0 20px}
+.pieCol .pie3d{width:185px;height:185px}
+.catbar{display:flex;height:26px;border-radius:8px;overflow:hidden;margin:11px 0 0;border:1px solid var(--line)}
+.catbar .cseg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden}
+.catrow{display:flex;gap:6px 14px;font-size:12px;font-weight:700;color:var(--mut);margin:7px 1px 0;flex-wrap:wrap}
+.catrow b{color:var(--ink)}
 .flow{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
 .fcard{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px}
 .fcard .ft{font-size:12.5px;color:var(--mut);font-weight:800}
@@ -234,6 +244,7 @@ th,td{padding:6px 4px;font-size:12px}
     <tbody id="holdbody"></tbody>
   </table>
   <div id="pnlbox"></div>
+  <div id="pnlchart"></div>
   <div class="note">此表<b>自動彙總上方各批次填的買入</b>（平均成本＝全部批次加權平均），不用重複輸入。美股以美元計價，台幣金額用上方匯率換算。<b>應達進度</b>＝已到期批次數×25%；組合損益＝現值合計÷成本合計−1，<b>觸及 −10% → 立即提前執行下一批，後續日期不變。</b>所有輸入存在這台電腦的瀏覽器裡。</div>
 </section>
 
@@ -297,9 +308,21 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="srcbar" id="as_srcbar"></div>
   <div class="note" style="border:none;padding-top:2px"><span id="as_srctxt"></span></div>
 
-  <div class="barlbl" style="margin-top:18px">總資產分布（投資部位＋保留現金）</div>
-  <div class="pieWrap"><div class="pie3d" id="as_pie"></div></div>
-  <div class="pielegend" id="as_legend"></div>
+  <div class="barlbl" style="margin-top:18px">總資產分布 · 貸款前 vs 貸款後（投資部位＋現金）</div>
+  <div class="twopie">
+    <div class="pieCol">
+      <div class="pieColT">貸款前 · 階段一（僅自有資金）<span class="pieColTot" id="as_tot_a"></span></div>
+      <div id="as_cat_a"></div>
+      <div class="pieWrap"><div class="pie3d" id="as_pie_a"></div></div>
+      <div class="pielegend" id="as_legend_a"></div>
+    </div>
+    <div class="pieCol">
+      <div class="pieColT">貸款後 · 階段二（自有＋貸款）<span class="pieColTot" id="as_tot_b"></span></div>
+      <div id="as_cat_b"></div>
+      <div class="pieWrap"><div class="pie3d" id="as_pie_b"></div></div>
+      <div class="pielegend" id="as_legend_b"></div>
+    </div>
+  </div>
 
   <div class="barlbl" style="margin-top:22px">兩階段佈署</div>
   <div class="flow">
@@ -594,10 +617,11 @@ function recalcPlan(){
         const fillW=Math.min(pc,100);
         const fillC=over?'var(--up)':a[2];
         const nm=a[1].replace('台積電 ','').replace('元大 ','');
+        let tipTxt;{const gap=tgtT-vi;if(gap<=0){tipTxt=over?('超買 NT$'+f0(-gap)):'✓ 已達本批目標';}else{const pxN=curPrice(k);const px=(pxN&&pxN>0)?pxN:(getFill(i,k).p||0);const pxTWD=px*(us?fx:1);if(pxTWD>0){const sh=gap/pxTWD;tipTxt='還要買 ≈'+(us?sh.toFixed(2):Math.ceil(sh))+' 股（還差 NT$'+f0(gap)+(us?' / US$'+f0(gap/fx):'')+'，現價 '+(us?('US$'+f0(px)):('NT$'+f0(px)))+'）';}else{tipTxt='還差 NT$'+f0(gap)+'（尚無現價，請先按 ↻ 重新抓價）';}}}
         rows2+='<div class="prow">'+
           '<span class="pnm" style="color:'+a[2]+'">'+nm+'</span>'+
           '<span class="pbar"><div style="width:'+fillW+'%;background:'+fillC+'"></div></span>'+
-          '<span class="ppct"'+(over?' style="color:var(--up)"':(pc>=98?' style="color:var(--dn)"':''))+'>'+pc.toFixed(0)+'%'+(over?' 超買':'')+'</span>'+
+          '<span class="ppct tip"'+(over?' style="color:var(--up)"':(pc>=98?' style="color:var(--dn)"':''))+' tabindex="0" data-tip="'+tipTxt+'">'+pc.toFixed(0)+'%'+(over?' 超買':'')+'</span>'+
           '<span class="pamt">$'+f0(vi)+' / $'+f0(tgtT)+'</span></div>';
       });
       rows2+='<div class="prow" style="border-top:1px dashed var(--line);padding-top:7px;margin-top:8px">'+
@@ -756,6 +780,72 @@ async function fetchMkt(){
     recalcMkt();
   }
   st.textContent='🟢 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+' 更新（'+ok+'/'+MKT.length+'）';
+  buildPnlChart();
+}
+/* ───────── 損益走勢圖：歷史收盤＋批次日期重建（成本 staircase vs 市值） ───────── */
+let HIST={},pnlBusy=false;
+function kfmt(v){v=Math.round(v);if(Math.abs(v)>=1e6)return (v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return Math.round(v/1e3)+'k';return ''+v;}
+function dstr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+async function yhist(sym){
+  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=3mo&interval=1d';
+  for(const px of PROXIES){
+    try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
+      const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
+      const j=await res.json();const r=j&&j.chart&&j.chart.result&&j.chart.result[0];if(!r)continue;
+      const ts=r.timestamp||[];const cl=(r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close)||[];
+      const map={};for(let i=0;i<ts.length;i++){if(cl[i]!=null)map[dstr(new Date(ts[i]*1000))]=cl[i];}
+      if(Object.keys(map).length)return map;
+    }catch(e){}
+  }
+  return null;
+}
+async function buildPnlChart(){
+  const box=document.getElementById('pnlchart');if(!box||pnlBusy)return;
+  const fx=gv('fx')||32;
+  const items=[];
+  ASSETS.forEach(a=>{const k=a[0];let sh=0;PLAN_DEF.forEach((p,i)=>{const f=getFill(i,k);if(f.p>0&&f.s>0)sh+=f.s;});
+    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);items.push({k:k,us:a[3]==='us',sym:m?m[1]:null});}});
+  let firstD=null;PLAN_DEF.forEach((p,i)=>{let any=false;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)any=true;});if(any&&(firstD===null||S.dates[i]<firstD))firstD=S.dates[i];});
+  if(!items.length||!firstD){box.innerHTML='';return;}
+  pnlBusy=true;
+  try{
+    if(!box.innerHTML)box.innerHTML='<div class="note" style="border:none">📈 載入損益走勢中…</div>';
+    for(const it of items){if(it.sym&&!HIST[it.sym]){const h=await yhist(it.sym);if(h)HIST[it.sym]=h;}}
+    const today=todayStr();const days=[];let d=new Date(firstD+'T00:00:00'),end=new Date(today+'T00:00:00');
+    while(d<=end){days.push(dstr(d));d.setDate(d.getDate()+1);}
+    const closeOn=(sym,ds)=>{const h=HIST[sym];if(!h)return null;if(h[ds]!=null)return h[ds];let bd='',bv=null;for(const k in h){if(k<=ds&&k>bd){bd=k;bv=h[k];}}return bv;};
+    const cost=[],val=[];
+    days.forEach(ds=>{let c=0,v=0;
+      PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds)ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)c+=f.p*f.s*((a[3]==='us')?fx:1);});});
+      items.forEach(it=>{let sh=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds){const f=getFill(i,it.k);if(f.p>0&&f.s>0)sh+=f.s;}});
+        if(sh>0){let px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0)v+=px*sh*(it.us?fx:1);}});
+      cost.push(c);val.push(v);});
+    const n=days.length,W=720,H=240,PL=58,PR=14,PT=16,PB=26;
+    const allv=cost.concat(val).filter(x=>isFinite(x)&&x>0);
+    if(!allv.length){box.innerHTML='';return;}
+    let mn=Math.min.apply(null,allv),mx=Math.max.apply(null,allv);
+    const pad=(mx-mn)*0.12||mx*0.05||1000;mn=Math.max(0,mn-pad);mx=mx+pad;
+    const X=i=>PL+(n<=1?0:i/(n-1)*(W-PL-PR));
+    const Y=v=>PT+(1-(v-mn)/(mx-mn||1))*(H-PT-PB);
+    const path=arr=>arr.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    let grid='';for(let g=0;g<=4;g++){const vv=mn+(mx-mn)*g/4,yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
+    let marks='';PLAN_DEF.forEach((p,i)=>{const di=days.indexOf(S.dates[i]);if(di>=0){const xx=X(di);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>';}});
+    const xl='<text x="'+PL+'" y="'+(H-8)+'" font-size="10" fill="#9a8f7a">'+days[0].slice(5)+'</text><text x="'+(W-PR)+'" y="'+(H-8)+'" text-anchor="end" font-size="10" fill="#9a8f7a">'+days[n-1].slice(5)+'</text>';
+    const cNow=cost[n-1],vNow=val[n-1],pl=vNow-cNow,plp=cNow>0?(vNow/cNow-1)*100:0,plc=pl>=0?'#c0392b':'#0d9488',vline=vNow>=cNow?'#c0392b':'#0d9488';
+    box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢（成本 vs 市值）</div>'+
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;margin:2px 0 7px">'+
+        '<span style="font-size:13px;font-weight:700;color:var(--mut)">成本 <b style="color:var(--ink);font-size:15px">$'+f0(cNow)+'</b></span>'+
+        '<span style="font-size:13px;font-weight:700;color:var(--mut)">市值 <b style="color:var(--ink);font-size:15px">$'+f0(vNow)+'</b></span>'+
+        '<span style="font-size:13px;font-weight:700;color:var(--mut)">損益 <b style="color:'+plc+';font-size:15px">'+(pl>=0?'+':'−')+'$'+f0(Math.abs(pl))+'（'+(plp>=0?'+':'')+plp.toFixed(1)+'%）</b></span>'+
+      '</div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px">'+
+        grid+marks+
+        '<path d="'+path(cost)+'" fill="none" stroke="#bd8420" stroke-width="2" stroke-dasharray="6 4"/>'+
+        '<path d="'+path(val)+'" fill="none" stroke="'+vline+'" stroke-width="2.5"/>'+xl+
+      '</svg>'+
+      '<div class="catrow" style="margin-top:8px"><span><b style="color:#bd8420">▬▬</b> 成本（累計投入，逐批墊高）</span><span><b style="color:'+vline+'">▬▬</b> 市值（持股×當日收盤）</span></div>'+
+      '<div class="note" style="border:none;padding-top:4px;font-size:11.5px">曲線以各標的每日歷史收盤重建，從第 1 批買進日（'+firstD+'）起算；假設每批股數於批次日當天買進、匯率固定 '+fx+'。垂直虛線為各批次執行日。</div>';
+  }finally{pnlBusy=false;}
 }
 document.getElementById('fund').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 document.getElementById('fx').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
@@ -776,15 +866,28 @@ function recalcAssets(){
       d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span>';sb.appendChild(d);});}
   const st=document.getElementById('as_srctxt');
   if(st)st.innerHTML='總資金 <b>$'+f0(total)+'</b>（自有 $'+f0(own)+' ＋ 貸款 $'+f0(loan)+'）→ 投資 <b>$'+f0(invest)+'</b> ＋ 保留現金 $'+f0(res)+(loan>0?'　·　<span class="up">含槓桿 '+(own>0?(+(loan/own*100).toFixed(0)):'∞')+'%</span>':'');
-  const slices=[];let acc=0;const grand=invest+res;
-  ASSETS.forEach(a=>{const amt=invest*A[a[0]]/hold;slices.push([a[1].replace('台積電 ','').replace('元大 ',''),amt,a[2]]);});
-  slices.push(['保留現金',res,'#8a7b63']);
-  let cg=[],lg='';
-  slices.forEach(s=>{const pct=grand>0?s[1]/grand*100:0;const from=acc,to=acc+pct;acc=to;
-    cg.push(s[2]+' '+from.toFixed(2)+'% '+to.toFixed(2)+'%');
-    lg+='<div class="pli"><span class="pd" style="background:'+s[2]+'"></span><span class="pn">'+s[0]+'</span><span class="pp">'+pct.toFixed(1)+'%</span><span class="pa">$'+f0(s[1])+'</span></div>';});
-  const pe=document.getElementById('as_pie');if(pe)pe.style.background='conic-gradient('+cg.join(',')+')';
-  const le=document.getElementById('as_legend');if(le)le.innerHTML=lg;
+  const grand=invest+res;
+  const ETFK={qqq:1,voo:1,t0050:1},STKK={googl:1,t2330:1};
+  function drawPie(sfx,investAmt,cashAmt){
+    const gd=investAmt+cashAmt;let acc=0,cg=[],lg='',etf=0,stk=0;
+    ASSETS.forEach(a=>{const amt=investAmt*A[a[0]]/hold;
+      if(ETFK[a[0]])etf+=amt;else if(STKK[a[0]])stk+=amt;
+      const pct=gd>0?amt/gd*100:0,from=acc,to=acc+pct;acc=to;
+      cg.push(a[2]+' '+from.toFixed(2)+'% '+to.toFixed(2)+'%');
+      lg+='<div class="pli"><span class="pd" style="background:'+a[2]+'"></span><span class="pn">'+a[1].replace('台積電 ','').replace('元大 ','')+'</span><span class="pp">'+pct.toFixed(1)+'%</span><span class="pa">$'+f0(amt)+'</span></div>';});
+    const cpct=gd>0?cashAmt/gd*100:0;cg.push('#8a7b63 '+acc.toFixed(2)+'% '+(acc+cpct).toFixed(2)+'%');
+    lg+='<div class="pli"><span class="pd" style="background:#8a7b63"></span><span class="pn">現金</span><span class="pp">'+cpct.toFixed(1)+'%</span><span class="pa">$'+f0(cashAmt)+'</span></div>';
+    const pe=document.getElementById('as_pie_'+sfx);if(pe)pe.style.background='conic-gradient('+cg.join(',')+')';
+    const le=document.getElementById('as_legend_'+sfx);if(le)le.innerHTML=lg;
+    const cats=[['現股',stk,'#127a6b'],['ETF',etf,'#caa23c'],['現金',cashAmt,'#8a7b63']];
+    let cb='',ct=[];cats.forEach(c=>{const pct=gd>0?c[1]/gd*100:0;
+      if(pct>0)cb+='<div class="cseg" style="width:'+pct+'%;background:'+c[2]+'">'+(pct>=10?c[0]+' '+pct.toFixed(0)+'%':'')+'</div>';
+      ct.push('<span><b>'+c[0]+'</b> '+pct.toFixed(0)+'%（$'+f0(c[1])+'）</span>');});
+    const ce=document.getElementById('as_cat_'+sfx);if(ce)ce.innerHTML='<div class="catbar">'+cb+'</div><div class="catrow">'+ct.join('')+'</div>';
+    const te=document.getElementById('as_tot_'+sfx);if(te)te.textContent='合計 $'+f0(gd);
+  }
+  drawPie('a',p1,p1cash);
+  drawPie('b',invest,res);
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   set('as_p1v','$'+f0(p1));set('as_p1s','自有 $'+f0(own)+' → 投資 $'+f0(p1)+'，留現金 $'+f0(p1cash));
   set('as_p2v','$'+f0(p2));set('as_p2s','貸款 $'+f0(loan)+' → 投資 $'+f0(p2)+'，補現金 $'+f0(Math.max(0,res-p1cash)));
