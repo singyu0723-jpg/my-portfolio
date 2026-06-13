@@ -127,7 +127,22 @@ h2.sect{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:21px
 td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut);font-size:12.5px;line-height:1.45}
 .twrap{overflow-x:auto}
 .twrap table{white-space:nowrap}
-.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.pieWrap{display:flex;justify-content:center;align-items:center;padding:34px 0 30px;perspective:900px}
+.pie3d{width:230px;height:230px;border-radius:50%;transform:rotateX(56deg);box-shadow:0 24px 0 -3px rgba(90,68,38,.32),0 26px 34px rgba(0,0,0,.28);transition:transform .3s}
+.pie3d:hover{transform:rotateX(48deg)}
+.pielegend{display:flex;flex-direction:column;gap:9px;margin:4px 0 2px}
+.pli{display:flex;align-items:center;gap:10px;font-size:14px}
+.pli .pd{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+.pli .pn{font-weight:800;flex:0 0 auto;min-width:96px}
+.pli .pp{font-weight:800;font-variant-numeric:tabular-nums;width:54px;text-align:right}
+.pli .pa{color:var(--mut);font-weight:700;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.flow{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
+.fcard{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px}
+.fcard .ft{font-size:12.5px;color:var(--mut);font-weight:800}
+.fcard .fv{font-size:21px;font-weight:900;margin:3px 0 1px}
+.fcard .fs{font-size:11.5px;color:var(--mut);font-weight:700}
+.srcbar{display:flex;height:30px;border-radius:9px;overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
 .tab{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 18px;font-size:14px;font-weight:800;cursor:pointer;color:var(--mut);box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
 @media(max-width:680px){
@@ -172,6 +187,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <div class="tabs">
   <div class="tab on" id="tab-tool" onclick="showView('tool')">🛠 評估工具</div>
+  <div class="tab" id="tab-assets" onclick="showView('assets')">💰 總資產配置</div>
   <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬率總表</div>
 </div>
 
@@ -264,6 +280,49 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 </div><!-- /view-tool -->
+
+<div id="view-assets" style="display:none">
+
+<section class="slide">
+  <h2 class="sect"><span class="num">💰</span>總資產配置<span class="hint">自有＋貸款，投資與現金的全貌</span></h2>
+  <div class="fundbox" style="display:grid;grid-template-columns:max-content 1fr;gap:9px 12px;align-items:center">
+    <label>自有現金</label><input type="number" id="as_own" value="2000000" step="100000" min="0">
+    <label>貸款金額</label><input type="number" id="as_loan" value="1500000" step="100000" min="0">
+    <label>醫療保留現金</label><input type="number" id="as_res" value="1000000" step="100000" min="0">
+    <label>第一階段投入</label><input type="number" id="as_p1" value="1500000" step="50000" min="0">
+  </div>
+  <div id="as_warn"></div>
+
+  <div class="barlbl">資金來源</div>
+  <div class="srcbar" id="as_srcbar"></div>
+  <div class="note" style="border:none;padding-top:2px"><span id="as_srctxt"></span></div>
+
+  <div class="barlbl" style="margin-top:18px">總資產分布（投資部位＋保留現金）</div>
+  <div class="pieWrap"><div class="pie3d" id="as_pie"></div></div>
+  <div class="pielegend" id="as_legend"></div>
+
+  <div class="barlbl" style="margin-top:22px">兩階段佈署</div>
+  <div class="flow">
+    <div class="fcard" style="border-color:var(--accent)">
+      <div class="ft">第一階段 · 現有自有資金</div>
+      <div class="fv" id="as_p1v">—</div>
+      <div class="fs" id="as_p1s">—</div>
+    </div>
+    <div class="fcard">
+      <div class="ft">第二階段 · 貸款到位後</div>
+      <div class="fv" id="as_p2v">—</div>
+      <div class="fs" id="as_p2s">—</div>
+    </div>
+    <div class="fcard" style="border-color:var(--amb)">
+      <div class="ft">完成後 · 投資總部位</div>
+      <div class="fv" id="as_iv">—</div>
+      <div class="fs" id="as_is">—</div>
+    </div>
+  </div>
+  <div class="note">投資部位 ＝ 自有 ＋ 貸款 − 保留現金。第一階段先動用自有資金；貸款到位後補足第二階段，現金回到保留目標。<b>提醒：</b>貸款投資屬槓桿，放大賺賠；第一階段現金若低於醫療保留目標，急用時需賣出投資（可能撞低點）。本頁僅供規劃試算，非投資建議。<br>投資部位的 QQQ/VOO/GOOGL/2330/0050 比例沿用「評估工具」分頁的設定，於此頁同步顯示。</div>
+</section>
+
+</div>
 
 <div id="view-returns" style="display:none">
 
@@ -384,10 +443,11 @@ th,td{padding:6px 4px;font-size:12px}
 <script>
 const f0=n=>isFinite(n)?Math.round(n).toLocaleString():'—';
 function showView(v){
-  document.getElementById('view-tool').style.display=v==='tool'?'':'none';
-  document.getElementById('view-returns').style.display=v==='returns'?'':'none';
-  document.getElementById('tab-tool').className='tab'+(v==='tool'?' on':'');
-  document.getElementById('tab-returns').className='tab'+(v==='returns'?' on':'');
+  ['tool','assets','returns'].forEach(k=>{
+    document.getElementById('view-'+k).style.display=v===k?'':'none';
+    document.getElementById('tab-'+k).className='tab'+(v===k?' on':'');
+  });
+  if(v==='assets')recalcAssets();
 }
 /* ───────── ① 配置（定稿：QQQ30 VOO25 GOOGL20 2330·15 0050·10，不含現金） ───────── */
 const ASSETS=[['qqq','QQQ','#0d9488','us',30],['voo','VOO','#3a8f6f','us',25],['googl','GOOGL','#14b8a6','us',20],
@@ -699,7 +759,48 @@ async function fetchMkt(){
 }
 document.getElementById('fund').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
 document.getElementById('fx').addEventListener('input',()=>{recalcAlloc();if(typeof fbSave==='function')fbSave();});
-buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();
+/* ───────── 💰 總資產配置 ───────── */
+function recalcAssets(){
+  const own=gv('as_own'),loan=gv('as_loan'),res=gv('as_res');
+  let p1=gv('as_p1');
+  const total=own+loan;
+  const invest=Math.max(0,total-res);
+  if(p1>invest){p1=invest;const e=document.getElementById('as_p1');if(e&&document.activeElement!==e)e.value=p1;}
+  const p2=Math.max(0,invest-p1);
+  const p1cash=Math.max(0,own-p1);
+  const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
+  const sb=document.getElementById('as_srcbar');
+  if(sb){sb.innerHTML='';
+    [['自有現金',own,'#0d9488'],['貸款',loan,'#bd8420']].forEach(g=>{if(g[1]<=0)return;
+      const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(total,1)*100)+'%';d.style.background=g[2];
+      d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span>';sb.appendChild(d);});}
+  const st=document.getElementById('as_srctxt');
+  if(st)st.innerHTML='總資金 <b>$'+f0(total)+'</b>（自有 $'+f0(own)+' ＋ 貸款 $'+f0(loan)+'）→ 投資 <b>$'+f0(invest)+'</b> ＋ 保留現金 $'+f0(res)+(loan>0?'　·　<span class="up">含槓桿 '+(own>0?(+(loan/own*100).toFixed(0)):'∞')+'%</span>':'');
+  const slices=[];let acc=0;const grand=invest+res;
+  ASSETS.forEach(a=>{const amt=invest*A[a[0]]/hold;slices.push([a[1].replace('台積電 ','').replace('元大 ',''),amt,a[2]]);});
+  slices.push(['保留現金',res,'#8a7b63']);
+  let cg=[],lg='';
+  slices.forEach(s=>{const pct=grand>0?s[1]/grand*100:0;const from=acc,to=acc+pct;acc=to;
+    cg.push(s[2]+' '+from.toFixed(2)+'% '+to.toFixed(2)+'%');
+    lg+='<div class="pli"><span class="pd" style="background:'+s[2]+'"></span><span class="pn">'+s[0]+'</span><span class="pp">'+pct.toFixed(1)+'%</span><span class="pa">$'+f0(s[1])+'</span></div>';});
+  const pe=document.getElementById('as_pie');if(pe)pe.style.background='conic-gradient('+cg.join(',')+')';
+  const le=document.getElementById('as_legend');if(le)le.innerHTML=lg;
+  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+  set('as_p1v','$'+f0(p1));set('as_p1s','自有 $'+f0(own)+' → 投資 $'+f0(p1)+'，留現金 $'+f0(p1cash));
+  set('as_p2v','$'+f0(p2));set('as_p2s','貸款 $'+f0(loan)+' → 投資 $'+f0(p2)+'，補現金 $'+f0(Math.max(0,res-p1cash)));
+  set('as_iv','$'+f0(invest));set('as_is','現金回到保留目標 $'+f0(res)+'｜投資佔總資產 '+(grand>0?(+(invest/grand*100).toFixed(0)):0)+'%');
+  const w=document.getElementById('as_warn');
+  if(w){let msg='';
+    if(p1cash<res)msg+='<div class="warnbox">⚠ 第一階段現金 $'+f0(p1cash)+' 低於醫療保留目標 $'+f0(res)+'（缺 $'+f0(res-p1cash)+'）— 貸款到位前若急用需賣出投資。</div>';
+    if(loan>own)msg+='<div class="warnbox">⚠ 貸款金額已超過自有現金，槓桿偏高，空頭年下檔風險放大。</div>';
+    w.innerHTML=msg;}
+  S.assets={own:own,loan:loan,res:res,p1:gv('as_p1')};save();
+}
+['as_own','as_loan','as_res','as_p1'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',recalcAssets);});
+(function(){if(S.assets){const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1'};
+  Object.keys(m).forEach(k=>{if(S.assets[k]!=null){const e=document.getElementById(m[k]);if(e)e.value=S.assets[k];}});}})();
+
+buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();
 fetchMkt();
 /* 報酬率總表分頁：互比勾選（各表獨立） */
 document.querySelectorAll('.colck').forEach(function(ck){
@@ -734,18 +835,20 @@ function fbApplyRemote(d){
   try{
     if(d.dates)S.dates=d.dates;
     if(d.fills)S.fills=d.fills;
+    if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1'};
+      Object.keys(m).forEach(k=>{if(d.assets[k]!=null){const e=document.getElementById(m[k]);if(e&&document.activeElement!==e)e.value=d.assets[k];}});}
     const f=document.getElementById('fund'),x=document.getElementById('fx');
     if(d.fund&&document.activeElement!==f)f.value=d.fund;
     if(d.fx&&document.activeElement!==x)x.value=d.fx;
     try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}
-    buildPlan();recalcAlloc();
+    buildPlan();recalcAlloc();if(typeof recalcAssets==='function')recalcAssets();
   }finally{fbApplying=false;}
 }
 function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,fund:gv('fund'),fx:gv('fx'),t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
