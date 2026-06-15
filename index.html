@@ -895,11 +895,17 @@ function renderPnlChart(){
   const mStart=new Date(today.slice(0,7)+'-01T00:00:00'),mEnd=new Date(today.slice(0,7)+'-01T00:00:00');mEnd.setMonth(mEnd.getMonth()+1);
   const SPAN=mEnd-mStart,mStartStr=today.slice(0,7)+'-01';
   const xOf=ds=>{const t=new Date(ds+'T00:00:00')-mStart;return PL+Math.max(0,Math.min(1,t/SPAN))*(W-PL-PR);};
-  let YMAX=3000000;const mxv=Math.max.apply(null,cost.concat(val).filter(x=>isFinite(x)));if(isFinite(mxv)&&mxv>YMAX)YMAX=Math.ceil(mxv*1.08/500000)*500000;
-  const Y=v=>PT+(1-v/YMAX)*(H-PT-PB);
+  /* Y 軸自動縮放到資料範圍（不從 0 起跳，才看得出成本/市值的小幅變化） */
+  const fin=cost.concat(val).filter(x=>x!=null&&isFinite(x)&&x>0);
+  let lo=fin.length?Math.min.apply(null,fin):0,hi=fin.length?Math.max.apply(null,fin):1;
+  let span=hi-lo;if(!(span>0))span=hi*0.1||1000;
+  let step=Math.pow(10,Math.floor(Math.log10(span/4)));{const m=span/4/step;step*=m>=5?5:m>=2?2:1;}
+  let YMIN=Math.max(0,Math.floor((lo-span*0.12)/step)*step),YMAX=Math.ceil((hi+span*0.12)/step)*step;
+  if(YMAX<=YMIN)YMAX=YMIN+step;
+  const Y=v=>PT+(1-(v-YMIN)/(YMAX-YMIN))*(H-PT-PB);
   const pathAll=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
   const pathSkip=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(v!=null&&isFinite(v)){s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;}else on=false;});return s.trim();};
-  let grid='';for(let g=0;g<=4;g++){const vv=YMAX*g/4,yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
+  let grid='';for(let vv=YMIN;vv<=YMAX+0.5;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
   let xticks='';const dim=new Date(mEnd.getTime()-1).getDate();[1,5,10,15,20,25,dim].forEach(dd=>{if(dd>dim)return;const dt=new Date(mStart);dt.setDate(dd);const xx=PL+((dt-mStart)/SPAN)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mStart.getMonth()+1)+'/'+dd+'</text>';});
   let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
   let vLast=null;for(let i=val.length-1;i>=0;i--){if(val[i]!=null){vLast=val[i];break;}}
