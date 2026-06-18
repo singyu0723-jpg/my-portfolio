@@ -639,14 +639,18 @@ function buildPlan(){
 function recalcPlan(){
   const fund=gv('fund');const fx=gv('fx')||32;const today=todayStr();
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
+  /* 滾動目標：每批目標 = 累計到該批應達水位 −（先前批次：已執行算實際投入、未執行算其目標）。前批超買/少買由下一批自動吸收，後續批次回標準。 */
+  const TGT={};const NB=PLAN_DEF.length;
+  ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const fullT=fund*A[k]/hold;let before=0;
+    for(let i=0;i<NB;i++){const cum=fullT*(i+1)/NB;const t=Math.max(0,cum-before);if(!TGT[i])TGT[i]={};TGT[i][k]=t;const f=getFill(i,k);const act=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;before+=act>0?act:t;}});
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
-    const tgtB=fund*0.25;
+    let tgtB=0;ASSETS.forEach(a=>{tgtB+=TGT[i][a[0]];});
     const ae=document.getElementById('bamt_'+i);if(ae)ae.textContent='$'+f0(tgtB);
     const cu=document.getElementById('bcum_'+i);if(cu)cu.textContent='$'+f0(fund*0.25*(i+1));
     let inv=0;const viMap={};
     ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';
-      const tgtT=tgtB*A[k]/hold;
+      const tgtT=TGT[i][k];
       const ft=document.getElementById('ft_'+i+'_'+k);
       if(ft)ft.innerHTML='$'+f0(tgtT)+(us?' <span class="mut usdhint" style="font-size:11px">US$'+f0(tgtT/fx)+'</span>':'');
       const f=getFill(i,k);
@@ -666,7 +670,7 @@ function recalcPlan(){
     if(viz){
       let rows2='';
       ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';
-        const tgtT=tgtB*A[k]/hold;
+        const tgtT=TGT[i][k];
         const vi=viMap[k]||0;
         const pc=tgtT>0?vi/tgtT*100:0;
         const over=pc>=102;
