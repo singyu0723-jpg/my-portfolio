@@ -651,7 +651,8 @@ function recalcPlan(){
   const stdBatch=ASSETS.reduce((s,a)=>s+stdT[a[0]],0);
   const batchAct=PLAN_DEF.map((p,i)=>{const m={};ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const f=getFill(i,k);m[k]=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;});return m;});
   let activeIdx=-1;{let c=0;for(let i=0;i<NB;i++){let bt=0;ASSETS.forEach(a=>bt+=batchAct[i][a[0]]);c+=bt;if(c<stdBatch*(i+1)-1){activeIdx=i;break;}}}
-  const carryOf=(i,k)=>{if(i!==activeIdx)return 0;let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];return b-i*stdT[k];};
+  /* 結轉＝累計(之前實投−之前標準)：活動批(含之前)顯示完整正負(超買/缺口都遞延到下一批)；活動批之後的未來批只顯示「正的超買預填」，避免未填批跳出假缺口 */
+  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const c=b-i*stdT[k];return (activeIdx<0||i<=activeIdx)?c:Math.max(0,c);};
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
     const tgtB=stdBatch;
@@ -708,7 +709,7 @@ function recalcPlan(){
     const due=(st!=='done'&&S.dates[i]<=today);
     const card=document.getElementById('bk_'+i);const bz=document.getElementById('bz_'+i);
     if(card){card.className='bk'+(st==='done'?' done':(due?' duedate':''));
-      card.style.display=(S.hideF&&inv<=0&&i!==activeIdx&&S.dates[i]>today)?'none':'';}
+      card.style.display=(S.hideF&&Math.abs(progTot)<1&&inv<=0&&i!==activeIdx&&S.dates[i]>today)?'none':'';}
     if(bz){const lb=st==='done'?STL.done:(st==='part'?[STL.part[0]+' '+ach.toFixed(0)+'%',STL.part[1]]:(due?STL.due:STL.wait));
       bz.textContent=lb[0];bz.className='zone '+lb[1];}
     if(next===null&&st!=='done')next=i;
