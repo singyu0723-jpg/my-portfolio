@@ -249,13 +249,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="kicker">投資評估工具 · Erick</div>
   <h1>穩健核心配置</h1>
   <div class="sub">QQQ 30｜VOO 25｜GOOGL 20｜2330 15｜0050 10</div>
-  <div class="fundbox" style="margin-top:12px">
-    <label>投資總額</label>
-    <input type="number" id="fund" value="1000000" step="10000" min="0">
-    <span class="mut" style="font-size:13px">元（台幣）</span>
-    <label style="margin-left:6px">美元匯率</label>
-    <input type="number" id="fx" value="32.0" step="0.1" min="20" style="width:88px">
-  </div>
+  <input type="hidden" id="fund" value="0">
 </section>
 
 <section class="slide">
@@ -301,39 +295,18 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <div class="sechd" onclick="toggleSec('view')">
-    <h2 class="sect"><span class="num">⑤</span>觀點與風險<span class="caret" id="ca_view">▸</span></h2>
+  <div class="sechd" onclick="toggleSec('fx')">
+    <h2 class="sect"><span class="num">⑤</span>美元/台幣匯率<span class="mkstatus" id="fxstatus" style="margin-left:auto">—</span><span class="caret" id="ca_fx">▸</span></h2>
   </div>
-  <div class="secbody" id="sb_view">
-  <ul>
-    <li>看好美國（產業鏈頂端、高毛利）；<b>2330 是台股例外</b>—先進製程獨佔、本身是源頭。</li>
-    <li>VTI vs VOO 已比過：差距 ≤0.3pp，定稿選 VOO（純大型股）。最佳化也掃過：定稿已貼近效率前緣，不再調比例。</li>
-    <li class="warn">五檔同屬 AI 鏈、<b>同漲同跌</b>，分散有限 → 防禦靠組合外現金與分批紀律。</li>
-    <li class="warn">0050 在系統性股災不保護（2008 −43%），它的保險只對「台積電單一事件」有效。</li>
-    <li class="warn">美股 75% 含台幣匯率風險（現約 32）→ 用長期持有＋後兩批留台幣分批換匯處理。</li>
-    <li class="warn">過去 1 年台股翻倍是 20 年極端值，<b>不可外推</b>；規劃用 15–20 年年化（16–20%）再打折。</li>
-  </ul>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="sechd" onclick="toggleSec('next')">
-    <h2 class="sect"><span class="num">⑥</span>下一步<span class="caret" id="ca_next">▸</span></h2>
-  </div>
-  <div class="secbody" id="sb_next">
-  <ul>
-    <li><b>機械式日程</b>：6/12 補齊第 1 批 → 6/22 第 2 批 → 6/29 第 3 批 → 7/6 完成建倉。自己記日期，到日執行。</li>
-    <li><b>每批下單後</b>：成交價/股數記入 Erick_投資損益紀錄_共用.md，並回來更新②的「已投入金額」與批次狀態。</li>
-    <li><b>每日 17:00 排程</b>：標的改為 2330／0050（＋QQQ／VOO／GOOGL 收盤）。</li>
-    <li><b>季度檢視</b>：台積電實質曝險 >25%、或 GOOGL 實質 >28% 時再平衡。</li>
-  </ul>
-  <div class="note">數據紀律：台股＝證交所官方 API（交叉驗證 ✓）；位階自動價為 Yahoo 即時/收盤，僅供參考。本檔非投資建議。</div>
+  <div class="secbody" id="sb_fx">
+  <div id="fxchart"></div>
+  <div class="note">即時匯率自動抓取（Yahoo USDTWD=X）；美股換算與美元目標皆用此匯率。可能延遲 15–20 分鐘。</div>
   </div>
 </section>
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('plan')">
-    <h2 class="sect"><span class="num">⑦</span>建倉日程<span class="caret" id="ca_plan">▸</span></h2>
+    <h2 class="sect"><span class="num">⑥</span>建倉日程<span class="caret" id="ca_plan">▸</span></h2>
   </div>
   <div class="secbody" id="sb_plan">
   <table class="schtbl">
@@ -349,6 +322,37 @@ th,td{padding:6px 4px;font-size:12px}
   </div>
 </section>
 
+<section class="slide">
+  <div class="sechd" onclick="toggleSec('view')">
+    <h2 class="sect"><span class="num">⑦</span>觀點與風險<span class="caret" id="ca_view">▸</span></h2>
+  </div>
+  <div class="secbody" id="sb_view">
+  <ul>
+    <li>看好美國（產業鏈頂端、高毛利）；<b>2330 是台股例外</b>—先進製程獨佔、本身是源頭。</li>
+    <li>VTI vs VOO 已比過：差距 ≤0.3pp，定稿選 VOO（純大型股）。最佳化也掃過：定稿已貼近效率前緣，不再調比例。</li>
+    <li class="warn">五檔同屬 AI 鏈、<b>同漲同跌</b>，分散有限 → 防禦靠組合外現金與分批紀律。</li>
+    <li class="warn">0050 在系統性股災不保護（2008 −43%），它的保險只對「台積電單一事件」有效。</li>
+    <li class="warn">美股 75% 含台幣匯率風險（現約 32）→ 用長期持有＋後兩批留台幣分批換匯處理。</li>
+    <li class="warn">過去 1 年台股翻倍是 20 年極端值，<b>不可外推</b>；規劃用 15–20 年年化（16–20%）再打折。</li>
+  </ul>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="sechd" onclick="toggleSec('next')">
+    <h2 class="sect"><span class="num">⑧</span>下一步<span class="caret" id="ca_next">▸</span></h2>
+  </div>
+  <div class="secbody" id="sb_next">
+  <ul>
+    <li><b>機械式日程</b>：6/12 補齊第 1 批 → 6/22 第 2 批 → 6/29 第 3 批 → 7/6 完成建倉。自己記日期，到日執行。</li>
+    <li><b>每批下單後</b>：成交價/股數記入 Erick_投資損益紀錄_共用.md，並回來更新②的「已投入金額」與批次狀態。</li>
+    <li><b>每日 17:00 排程</b>：標的改為 2330／0050（＋QQQ／VOO／GOOGL 收盤）。</li>
+    <li><b>季度檢視</b>：台積電實質曝險 >25%、或 GOOGL 實質 >28% 時再平衡。</li>
+  </ul>
+  <div class="note">數據紀律：台股＝證交所官方 API（交叉驗證 ✓）；位階自動價為 Yahoo 即時/收盤，僅供參考。本檔非投資建議。</div>
+  </div>
+</section>
+
 </div><!-- /view-tool -->
 
 <div id="view-assets" style="display:none">
@@ -359,7 +363,9 @@ th,td{padding:6px 4px;font-size:12px}
     <label>自有現金</label><input type="number" id="as_own" value="2000000" step="100000" min="0">
     <label>貸款金額</label><input type="number" id="as_loan" value="1500000" step="100000" min="0">
     <label>醫療保留現金</label><input type="number" id="as_res" value="1000000" step="100000" min="0">
-    <label>第一階段投入</label><input type="number" id="as_p1" value="1500000" step="50000" min="0">
+    <label>第一階段投資</label><input type="number" id="as_p1" value="1500000" step="50000" min="0">
+    <label>第二階段投資</label><input type="number" id="as_p2" value="0" step="50000" min="0">
+    <label>美元匯率<span style="font-size:10px;color:var(--mut);font-weight:600">即時</span></label><input type="number" id="fx" value="32.0" step="0.01" min="20" readonly title="即時抓取，不可手動編輯" style="background:#f1ead9;font-weight:800;cursor:not-allowed">
   </div>
   <div id="as_warn"></div>
 
@@ -597,9 +603,9 @@ function togglePlan(i){
 }
 function toggleHide(){S.hideF=!S.hideF;save();recalcPlan();}
 /* ③④⑤ 收折（預設收起） */
-let SECS={mkt:false,view:false,next:false,plan:true};
+let SECS={mkt:false,fx:true,view:false,next:false,plan:true};
 try{const sv2=JSON.parse(localStorage.getItem('erick_secs_v1'));if(sv2)SECS=Object.assign(SECS,sv2);}catch(e){}
-function applySecs(){['mkt','view','next','plan'].forEach(s=>{
+function applySecs(){['mkt','fx','view','next','plan'].forEach(s=>{
   const b=document.getElementById('sb_'+s);if(b)b.style.display=SECS[s]?'':'none';
   const c=document.getElementById('ca_'+s);if(c)c.textContent=SECS[s]?'▾':'▸';});}
 function toggleSec(s){SECS[s]=!SECS[s];try{localStorage.setItem('erick_secs_v1',JSON.stringify(SECS));}catch(e){}applySecs();}
@@ -844,7 +850,7 @@ async function yget(sym){
 }
 async function fetchMkt(){
   const st=document.getElementById('mkstatus');if(st)st.textContent='抓價中…';let ok=0;
-  const rs=await Promise.all(MKT.map(m=>yget(m[1])));
+  const [rs,fxr]=await Promise.all([Promise.all(MKT.map(m=>yget(m[1]))),yget('USDTWD=X')]);
   rs.forEach((r,i)=>{const q=document.getElementById('mq_'+i);
     if(r){MKT[i][2]=Math.round(r.price*100)/100;MKT[i][3]=Math.round(r.high*100)/100;
       const ri=document.querySelector('input[data-mi="'+i+'"][data-mf="2"]');if(ri)ri.value=MKT[i][2];
@@ -853,14 +859,38 @@ async function fetchMkt(){
     else{if(q)q.textContent='⚪';}});
   recalcMkt();
   if(st)st.textContent='🟢 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+' 更新（'+ok+'/'+MKT.length+'）';
+  if(fxr&&isFinite(fxr.price)&&fxr.price>0){window.FXRATE=Math.round(fxr.price*1000)/1000;const fe=document.getElementById('fx');if(fe&&document.activeElement!==fe)fe.value=window.FXRATE;const fs=document.getElementById('fxstatus');if(fs)fs.textContent=window.FXRATE.toFixed(2);if(typeof recalcAlloc==='function')recalcAlloc();}
   saveMktCache();
   buildPnlChart();
+  buildFxChart();
 }
 /* ───────── 損益走勢圖：歷史收盤＋批次日期重建（成本 staircase vs 市值） ───────── */
-let HIST={},pnlBusy=false;
+let HIST={},pnlBusy=false,FXHIST=null,fxBusy=false;
 const MKTKEY='erick_mkt_v1';
-function saveMktCache(){try{const p={};MKT.forEach(m=>{if(isFinite(m[2])&&m[2])p[m[1]]=[m[2],m[3]];});localStorage.setItem(MKTKEY,JSON.stringify({p:p,hist:HIST,t:Date.now()}));}catch(e){}}
-function loadMktCache(){try{const c=JSON.parse(localStorage.getItem(MKTKEY));if(!c)return;if(c.hist)HIST=c.hist;if(c.p)MKT.forEach(m=>{if(c.p[m[1]]){m[2]=c.p[m[1]][0];m[3]=c.p[m[1]][1];}});if(c.t){const st=document.getElementById('mkstatus');if(st)st.textContent='上次 '+new Date(c.t).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+'（快取）';}}catch(e){}}
+function saveMktCache(){try{const p={};MKT.forEach(m=>{if(isFinite(m[2])&&m[2])p[m[1]]=[m[2],m[3]];});localStorage.setItem(MKTKEY,JSON.stringify({p:p,hist:HIST,fx:window.FXRATE||null,fxhist:FXHIST,t:Date.now()}));}catch(e){}}
+function loadMktCache(){try{const c=JSON.parse(localStorage.getItem(MKTKEY));if(!c)return;if(c.hist)HIST=c.hist;if(c.fxhist)FXHIST=c.fxhist;if(c.p)MKT.forEach(m=>{if(c.p[m[1]]){m[2]=c.p[m[1]][0];m[3]=c.p[m[1]][1];}});if(c.fx){window.FXRATE=c.fx;const fe=document.getElementById('fx');if(fe)fe.value=c.fx;const fs=document.getElementById('fxstatus');if(fs)fs.textContent=(+c.fx).toFixed(2);}if(c.t){const st=document.getElementById('mkstatus');if(st)st.textContent='上次 '+new Date(c.t).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+'（快取）';}}catch(e){}}
+function renderFxChart(){
+  const box=document.getElementById('fxchart');if(!box)return;
+  const h=FXHIST;
+  if(!h||!Object.keys(h).length){if(!box.innerHTML)box.innerHTML='<div class="note" style="border:none">📈 匯率載入中…</div>';return;}
+  const dates=Object.keys(h).sort(),vals=dates.map(d=>h[d]),n=dates.length;
+  const W=720,H=200,PL=52,PR=14,PT=14,PB=24;
+  let lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals),span=hi-lo;if(!(span>0))span=hi*0.01||0.1;
+  let step=Math.pow(10,Math.floor(Math.log10(span/4)));{const m=span/4/step;step*=m>=5?5:m>=2?2:1;}
+  let YMIN=Math.floor((lo-span*0.12)/step)*step,YMAX=Math.ceil((hi+span*0.12)/step)*step;if(YMAX<=YMIN)YMAX=YMIN+step;
+  const X=i=>PL+(n<=1?0:i/(n-1)*(W-PL-PR)),Y=v=>PT+(1-(v-YMIN)/(YMAX-YMIN))*(H-PT-PB);
+  const path=vals.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  let grid='';for(let vv=YMIN;vv<=YMAX+1e-9;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">'+vv.toFixed(2)+'</text>';}
+  const xl='<text x="'+PL+'" y="'+(H-7)+'" font-size="9" fill="#9a8f7a">'+dates[0].slice(5)+'</text><text x="'+(W-PR)+'" y="'+(H-7)+'" text-anchor="end" font-size="9" fill="#9a8f7a">'+dates[n-1].slice(5)+'</text>';
+  const cur=vals[n-1],first=vals[0],chgp=first>0?(cur/first-1)*100:0,col=cur>=first?'#c0392b':'#0d9488';
+  box.innerHTML='<div style="display:flex;gap:14px;align-items:baseline;margin:2px 0 7px;flex-wrap:wrap"><span style="font-size:22px;font-weight:900">'+cur.toFixed(3)+'</span><span class="mut" style="font-weight:700;font-size:12.5px">USD/TWD · 區間 '+(chgp>=0?'+':'')+chgp.toFixed(1)+'%（'+dates[0].slice(5)+'→'+dates[n-1].slice(5)+'）</span></div>'+
+    '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px">'+grid+'<path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="2.5"/>'+xl+'</svg>';
+}
+async function buildFxChart(){
+  renderFxChart();
+  if(fxBusy)return;fxBusy=true;
+  try{const h=await yhist('USDTWD=X');if(h){FXHIST=h;saveMktCache();renderFxChart();}}finally{fxBusy=false;}
+}
 function kfmt(v){v=Math.round(v);if(Math.abs(v)>=1e6)return (v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return Math.round(v/1e3)+'k';return ''+v;}
 function dstr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function pnlHover(e){var d=window.PNLI;if(!d)return;var svg=e.currentTarget;var r=svg.getBoundingClientRect();if(!r.width)return;var sx=(e.clientX-r.left)/r.width*d.W;var bi=0,bd=1e9;for(var i=0;i<d.xs.length;i++){var q=Math.abs(d.xs[i]-sx);if(q<bd){bd=q;bi=i;}}var x=d.xs[bi];
@@ -957,12 +987,13 @@ function pieTap(e,sfx,i){pieShow(sfx,i);pieMove(e,sfx);}
 /* ───────── 💰 總資產配置 ───────── */
 function recalcAssets(){
   const own=gv('as_own'),loan=gv('as_loan'),res=gv('as_res');
-  let p1=gv('as_p1');
+  const p1=gv('as_p1'),p2=gv('as_p2');
   const total=own+loan;
-  const invest=Math.max(0,total-res);
-  if(p1>invest){p1=invest;const e=document.getElementById('as_p1');if(e&&document.activeElement!==e)e.value=p1;}
-  const p2=Math.max(0,invest-p1);
+  const invest=p1+p2;
   const p1cash=Math.max(0,own-p1);
+  const cashAfter=Math.max(0,total-invest);
+  /* 投資總額 = 第一+第二階段，同步給評估工具（隱藏 #fund）並重算批次/配置 */
+  const fe=document.getElementById('fund');if(fe&&(+fe.value||0)!==invest){fe.value=invest;if(typeof recalcAlloc==='function')recalcAlloc();}
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
   const sb=document.getElementById('as_srcbar');
   if(sb){sb.innerHTML='';
@@ -970,7 +1001,7 @@ function recalcAssets(){
       const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(total,1)*100)+'%';d.style.background=g[2];
       d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span>';sb.appendChild(d);});}
   const st=document.getElementById('as_srctxt');
-  if(st)st.innerHTML='總資金 <b>$'+f0(total)+'</b>（自有 $'+f0(own)+' ＋ 貸款 $'+f0(loan)+'）→ 投資 <b>$'+f0(invest)+'</b> ＋ 保留現金 $'+f0(res)+(loan>0?'　·　<span class="up">含槓桿 '+(own>0?(+(loan/own*100).toFixed(0)):'∞')+'%</span>':'');
+  if(st)st.innerHTML='總資金 <b>$'+f0(total)+'</b>（自有 $'+f0(own)+' ＋ 貸款 $'+f0(loan)+'）→ 投資 <b>$'+f0(invest)+'</b> ＋ 現金 $'+f0(cashAfter)+'（醫療保留目標 $'+f0(res)+'）'+(loan>0?'　·　<span class="up">含槓桿 '+(own>0?(+(loan/own*100).toFixed(0)):'∞')+'%</span>':'');
   const grand=invest+res;
   const ETFK={qqq:1,voo:1,t0050:1},STKK={googl:1,t2330:1};
   function drawPie(sfx,investAmt,cashAmt){
@@ -998,27 +1029,28 @@ function recalcAssets(){
     const te=document.getElementById('as_tot_'+sfx);if(te)te.textContent='合計 $'+f0(gd);
   }
   drawPie('a',p1,p1cash);
-  drawPie('b',invest,res);
+  drawPie('b',invest,cashAfter);
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   set('as_tot_aa','$'+f0(own));set('as_tot_bb','$'+f0(total));
   const dbar=(id,tot,iv,cs)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML='';[['投資',iv,'#0d9488'],['現金',cs,'#8a7b63']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(tot,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(tot>0?(+(g[1]/tot*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});};
   dbar('as_bar_a',own,p1,p1cash);
   (function(){const el=document.getElementById('as_bar_b');if(!el)return;el.innerHTML='';
-    [['投資·前',p1,'#0d9488'],['投資·後',p2,'#5cb5a8'],['現金·前',p1cash,'#8a7b63'],['現金·後',Math.max(0,res-p1cash),'#b3a489']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(total,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});})();
+    [['投資·前',p1,'#0d9488'],['投資·後',p2,'#5cb5a8'],['現金·前',p1cash,'#8a7b63'],['現金·後',Math.max(0,cashAfter-p1cash),'#b3a489']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/Math.max(total,1)*100)+'%';d.style.background=g[2];d.style.flexDirection='column';d.innerHTML='<span class="s1">'+g[0]+' '+(total>0?(+(g[1]/total*100).toFixed(0)):0)+'%</span><span class="s2">$'+f0(g[1])+'</span>';el.appendChild(d);});})();
   const w=document.getElementById('as_warn');
   if(w){let msg='';
+    if(invest>total)msg+='<div class="warnbox">⚠ 投資合計 $'+f0(invest)+'（第一＋第二階段）超過總資金 $'+f0(total)+'，請調整。</div>';
     if(p1cash<res)msg+='<div class="warnbox">⚠ 第一階段現金 $'+f0(p1cash)+' 低於醫療保留目標 $'+f0(res)+'（缺 $'+f0(res-p1cash)+'）— 貸款到位前若急用需賣出投資。</div>';
     if(loan>own)msg+='<div class="warnbox">⚠ 貸款金額已超過自有現金，槓桿偏高，空頭年下檔風險放大。</div>';
     w.innerHTML=msg;}
-  S.assets={own:own,loan:loan,res:res,p1:gv('as_p1')};save();
+  S.assets={own:own,loan:loan,res:res,p1:gv('as_p1'),p2:gv('as_p2')};save();
 }
-['as_own','as_loan','as_res','as_p1'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',recalcAssets);});
-(function(){if(S.assets){const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1'};
+['as_own','as_loan','as_res','as_p1','as_p2'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',recalcAssets);});
+(function(){if(S.assets){const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
   Object.keys(m).forEach(k=>{if(S.assets[k]!=null){const e=document.getElementById(m[k]);if(e)e.value=S.assets[k];}});}})();
 
 /* fbRef 等 Firebase 變數須在任何 recalc/save 之前宣告，否則初始化時 fbSave 讀到 TDZ 會中斷整段腳本（fbInit 不會跑、登入卡在「連線中」）*/
 let fbRef=null,fbUnsub=null,fbTimer=null,fbApplying=false;
-loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();
+loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();
 fetchMkt();
 /* 報酬率總表分頁：互比勾選（各表獨立） */
 document.querySelectorAll('.colck').forEach(function(ck){
@@ -1054,7 +1086,7 @@ function fbApplyRemote(d){
     if(d.dates)S.dates=d.dates;
     _mig=migrateDates();
     if(d.fills)S.fills=d.fills;
-    if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1'};
+    if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
       Object.keys(m).forEach(k=>{if(d.assets[k]!=null){const e=document.getElementById(m[k]);if(e&&document.activeElement!==e)e.value=d.assets[k];}});}
     const f=document.getElementById('fund'),x=document.getElementById('fx');
     if(d.fund&&document.activeElement!==f)f.value=d.fund;
