@@ -639,18 +639,22 @@ function buildPlan(){
 function recalcPlan(){
   const fund=gv('fund');const fx=gv('fx')||32;const today=todayStr();
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
-  /* 滾動目標：每批目標 = 累計到該批應達水位 −（先前批次：已執行算實際投入、未執行算其目標）。前批超買/少買由下一批自動吸收，後續批次回標準。 */
-  const TGT={};const NB=PLAN_DEF.length;
-  ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const fullT=fund*A[k]/hold;let before=0;
-    for(let i=0;i<NB;i++){const cum=fullT*(i+1)/NB;const t=Math.max(0,cum-before);if(!TGT[i])TGT[i]={};TGT[i][k]=t;const f=getFill(i,k);const act=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;before+=act>0?act:t;}});
+  /* 進場標準目標固定；前批「超買溢出」自動結轉、預填到下一批的長條與數字（少買→下一批目標放大來補） */
+  const NB=PLAN_DEF.length;
+  const stdT={};ASSETS.forEach(a=>{stdT[a[0]]=fund*A[a[0]]/hold/NB;});
+  const batchAct=PLAN_DEF.map((p,i)=>{const m={};ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const f=getFill(i,k);m[k]=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;});return m;});
+  let numExec=0;batchAct.forEach(m=>{let any=false;ASSETS.forEach(a=>{if(m[a[0]]>0)any=true;});if(any)numExec++;});
+  const totAct={};ASSETS.forEach(a=>{const k=a[0];totAct[k]=0;batchAct.forEach(m=>{totAct[k]+=m[k];});});
+  const tgtOf=(i,k)=>{if(i!==numExec)return stdT[k];const c=totAct[k]-numExec*stdT[k];return c>=0?stdT[k]:(stdT[k]-c);};
+  const preOf=(i,k)=>{if(i!==numExec)return 0;const c=totAct[k]-numExec*stdT[k];return c>0?c:0;};
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
-    let tgtB=0;ASSETS.forEach(a=>{tgtB+=TGT[i][a[0]];});
+    let tgtB=0;ASSETS.forEach(a=>{tgtB+=tgtOf(i,a[0]);});
     const ae=document.getElementById('bamt_'+i);if(ae)ae.textContent='$'+f0(tgtB);
     const cu=document.getElementById('bcum_'+i);if(cu)cu.textContent='$'+f0(fund*0.25*(i+1));
     let inv=0;const viMap={};
     ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';
-      const tgtT=TGT[i][k];
+      const tgtT=tgtOf(i,k);
       const ft=document.getElementById('ft_'+i+'_'+k);
       if(ft)ft.innerHTML='$'+f0(tgtT)+(us?' <span class="mut usdhint" style="font-size:11px">US$'+f0(tgtT/fx)+'</span>':'');
       const f=getFill(i,k);
@@ -665,13 +669,14 @@ function recalcPlan(){
           fa.innerHTML='<span class="tip'+(ov?' up':(pc>=98?' dn':''))+'" tabindex="0" data-tip="'+tip+'">'+pc.toFixed(0)+'%'+(ov?' 超買':'')+'</span>';fa.className='n b';}}
     });
     const ach=tgtB>0?inv/tgtB*100:0;
-    /* 可視化：每檔一條「目標 vs 已買入」進度列 */
+    let invShown=inv;ASSETS.forEach(a=>{invShown+=preOf(i,a[0]);});const achShown=tgtB>0?invShown/tgtB*100:0;
+    /* 可視化：每檔一條「目標 vs 已買入（含前批結轉）」進度列 */
     const viz=document.getElementById('bviz_'+i);
     if(viz){
       let rows2='';
       ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';
-        const tgtT=TGT[i][k];
-        const vi=viMap[k]||0;
+        const tgtT=tgtOf(i,k);
+        const vi=(viMap[k]||0)+preOf(i,k);
         const pc=tgtT>0?vi/tgtT*100:0;
         const over=pc>=102;
         const fillW=Math.min(pc,100);
@@ -685,12 +690,12 @@ function recalcPlan(){
       });
       rows2+='<div class="prow" style="border-top:1px dashed var(--line);padding-top:7px;margin-top:8px">'+
         '<span class="pnm">合計</span>'+
-        '<span class="pbar"><div style="width:'+Math.min(ach,100)+'%;background:var(--accent)"></div></span>'+
-        '<span class="ppct">'+ach.toFixed(0)+'%</span>'+
-        '<span class="pamt">$'+f0(inv)+' / $'+f0(tgtB)+'</span></div>';
-      viz.innerHTML='<div style="margin:10px 0 2px">'+rows2+'</div>';
+        '<span class="pbar"><div style="width:'+Math.min(achShown,100)+'%;background:var(--accent)"></div></span>'+
+        '<span class="ppct">'+achShown.toFixed(0)+'%</span>'+
+        '<span class="pamt">$'+f0(invShown)+' / $'+f0(tgtB)+'</span></div>';
+      viz.innerHTML='<div style="margin:10px 0 2px">'+rows2+((invShown-inv)>0?'<div class="note" style="border:none;padding:5px 0 0;font-size:11px">↑ 含前批超買結轉 $'+f0(invShown-inv)+'（已預填本批進度，補剩餘即可）</div>':'')+'</div>';
     }
-    const be=document.getElementById('binv_'+i);if(be)be.textContent='$'+f0(inv);
+    const be=document.getElementById('binv_'+i);if(be)be.textContent='$'+f0(invShown);
     const st=ach>=97?'done':(ach>0?'part':'wait');
     const due=(st!=='done'&&S.dates[i]<=today);
     const card=document.getElementById('bk_'+i);const bz=document.getElementById('bz_'+i);
