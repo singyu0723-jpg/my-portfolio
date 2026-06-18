@@ -131,6 +131,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .twrap{overflow-x:auto}
 .twrap table{white-space:nowrap}
 .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+#ptr{position:fixed;top:0;left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:var(--accent);background:#f4efe6;padding:9px 0;transform:translateY(-100%);z-index:60;pointer-events:none}
 .pieWrap{display:flex;justify-content:center;align-items:center;padding:34px 0 30px;perspective:900px}
 .pie3d{width:230px;height:230px;border-radius:50%;transform:rotateX(56deg);box-shadow:0 24px 0 -3px rgba(90,68,38,.32),0 26px 34px rgba(0,0,0,.28);transition:transform .3s}
 .pie3d:hover{transform:rotateX(48deg)}
@@ -186,7 +187,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .stage2 tbody th{text-align:left;font-weight:800;color:var(--ink);white-space:nowrap}
 .stage2 tbody td{text-align:right;font-weight:800;color:var(--ink)}
 .stage2 tbody tr:last-child td,.stage2 tbody tr:last-child th{border-bottom:none}
-@media(max-width:680px){.twopie{gap:12px}.pieCol{min-width:0;flex-basis:100%}.svgpie svg{max-width:230px}.stage2 th,.stage2 td{padding:8px 6px;font-size:13px}.catbar{height:44px}}
+@media(max-width:680px){.twopie{gap:12px}.pieCol{min-width:0;flex-basis:100%}.svgpie svg{max-width:230px}.stage2 th,.stage2 td{padding:8px 6px;font-size:13px}.catbar{height:44px}.mktctrl{flex-basis:100%;margin-left:0;margin-top:4px;justify-content:flex-end}}
 .flow{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
 .fcard{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px}
 .fcard .ft{font-size:12.5px;color:var(--mut);font-weight:800}
@@ -233,6 +234,7 @@ th,td{padding:6px 4px;font-size:12px}
 </style>
 </head>
 <body>
+<div id="ptr">↓ 下拉重新整理</div>
 <div class="deck">
 
 <div class="tabs">
@@ -285,22 +287,22 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <div class="sechd" onclick="toggleSec('mkt')">
-    <h2 class="sect"><span class="num">④</span>多市場位階<span class="caret" id="ca_mkt">▸</span></h2>
-  </div>
-  <div class="secbody" id="sb_mkt">
-  <div class="mgrid" id="mktgrid"></div>
-  <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
-  </div>
-</section>
-
-<section class="slide">
   <div class="sechd" onclick="toggleSec('fx')">
-    <h2 class="sect"><span class="num">⑤</span>美元/台幣匯率<span class="mkstatus" id="fxstatus" style="margin-left:auto">—</span><span class="caret" id="ca_fx">▸</span></h2>
+    <h2 class="sect"><span class="num">④</span>美元/台幣匯率<span class="mkstatus" id="fxstatus" style="margin-left:auto">—</span><span class="caret" id="ca_fx">▸</span></h2>
   </div>
   <div class="secbody" id="sb_fx">
   <div id="fxchart"></div>
   <div class="note">即時匯率自動抓取（Yahoo USDTWD=X）；美股換算與美元目標皆用此匯率。可能延遲 15–20 分鐘。</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="sechd" onclick="toggleSec('mkt')">
+    <h2 class="sect"><span class="num">⑤</span>多市場位階<span class="caret" id="ca_mkt">▸</span></h2>
+  </div>
+  <div class="secbody" id="sb_mkt">
+  <div class="mgrid" id="mktgrid"></div>
+  <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
   </div>
 </section>
 
@@ -629,7 +631,7 @@ function buildPlan(){
       '<span class="amt"><span id="binv_'+i+'">$0</span><div class="s">本批已投入 / 目標 <b id="bamt_'+i+'">—</b></div></span></div>'+
       '<div id="bviz_'+i+'"></div>'+
       '<div id="bd_'+i+'" style="display:'+(S.open[i]?'':'none')+'">'+
-      '<table style="margin-top:6px"><tr><th>標的</th><th class="n">本批目標</th><th class="n">成交均價</th><th class="n">買入股數</th><th class="n">已投入</th><th class="n">達成</th></tr>'+rows+'</table>'+
+      '<div class="twrap"><table style="margin-top:6px;min-width:520px"><tr><th>標的</th><th class="n">本批目標</th><th class="n">成交均價</th><th class="n">買入股數</th><th class="n">已投入</th><th class="n">達成</th></tr>'+rows+'</table></div>'+
       '<div class="note" style="margin-top:6px;border:none;padding-top:0">同一批可分多筆買進：填「這批累計的均價與總股數」即可；美股填美元價，台幣自動換算。</div></div>';
     w.appendChild(d);
   });
@@ -773,7 +775,7 @@ function recalcHold(){
   if(pb){const fund2=gv('fund');const today=todayStr();
     let dueN=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=today)dueN++;});
     const expPct=dueN*25;const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
-    let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let bi=0;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)bi+=f.p*f.s*((a[3]==='us')?fx:1);});if(bi<fund2*0.25*0.97){nextI=i;nextD=S.dates[i];break;}}
+    let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let any=false;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)any=true;});if(!any){nextI=i;nextD=S.dates[i];break;}}
     pb.innerHTML='<div style="margin:14px 0 4px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:4px">'+
       '<span style="display:flex;align-items:baseline;gap:10px"><span style="font-size:14.5px;font-weight:800">部位建置進度</span><b style="font-size:20px">'+actPct.toFixed(1)+'%</b><span class="mut" style="font-weight:700;font-size:13px">$'+f0(cost)+' / $'+f0(fund2)+'</span></span>'+
@@ -1055,6 +1057,13 @@ function recalcAssets(){
 let fbRef=null,fbUnsub=null,fbTimer=null,fbApplying=false;
 loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();
 fetchMkt();
+/* 手機下拉重新整理（pull-to-refresh）：下拉到頂放開 → 重新抓價 */
+(function(){const ptr=document.getElementById('ptr');if(!ptr)return;let sy=0,active=false,dist=0,busy=false;const TH=65,MAX=90;
+  const top=()=>window.scrollY||document.documentElement.scrollTop||0;
+  document.addEventListener('touchstart',e=>{if(busy)return;if(top()<=0&&e.touches.length===1){sy=e.touches[0].clientY;active=true;dist=0;}},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!active||busy)return;const dy=e.touches[0].clientY-sy;if(dy>0&&top()<=0){dist=Math.min(dy*0.5,MAX);ptr.style.transition='none';ptr.style.transform='translateY('+(dist-8)+'px)';ptr.textContent=dist>=TH?'放開以更新 ↻':'↓ 下拉重新整理';if(dy>4)e.preventDefault();}else{active=false;ptr.style.transition='transform .2s';ptr.style.transform='translateY(-100%)';}},{passive:false});
+  document.addEventListener('touchend',()=>{if(!active||busy)return;active=false;ptr.style.transition='transform .2s';if(dist>=TH){busy=true;ptr.textContent='更新中…';ptr.style.transform='translateY('+(TH-8)+'px)';Promise.resolve().then(()=>fetchMkt()).catch(()=>{}).finally(()=>{setTimeout(()=>{ptr.style.transform='translateY(-100%)';busy=false;},600);});}else{ptr.style.transform='translateY(-100%)';}});
+})();
 /* 報酬率總表分頁：互比勾選（各表獨立） */
 document.querySelectorAll('.colck').forEach(function(ck){
   ck.addEventListener('change',function(){
