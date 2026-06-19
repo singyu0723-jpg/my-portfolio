@@ -22,7 +22,7 @@
 --accent:#0d9488;--acc2:#14b8a6;--up:#d83c4a;--dn:#0f9d63;--amb:#bd8420;--chip:#efe7d6;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
-.deck{max-width:920px;margin:0 auto;padding:18px 14px 60px}
+.deck{max-width:920px;margin:0 auto;padding:18px 14px 60px;position:relative;z-index:2;background:var(--bg)}
 .slide{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 24px 18px;margin-bottom:12px;position:relative}
 .barlbl{font-size:14.5px;color:var(--ink);font-weight:800;margin:20px 0 8px}
 .slide h2{margin:0 0 12px}
@@ -131,7 +131,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .twrap{overflow-x:auto}
 .twrap table{white-space:nowrap}
 .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-#ptr{position:fixed;top:0;left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:var(--accent);background:#f4efe6;padding:9px 0;transform:translateY(-100%);z-index:60;pointer-events:none}
+#ptr{position:fixed;top:0;left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:var(--accent);padding:12px 0;z-index:1;opacity:0;transition:opacity .15s;pointer-events:none}
 .pieWrap{display:flex;justify-content:center;align-items:center;padding:34px 0 30px;perspective:900px}
 .pie3d{width:230px;height:230px;border-radius:50%;transform:rotateX(56deg);box-shadow:0 24px 0 -3px rgba(90,68,38,.32),0 26px 34px rgba(0,0,0,.28);transition:transform .3s}
 .pie3d:hover{transform:rotateX(48deg)}
@@ -187,7 +187,7 @@ td.evt,th.evt{text-align:left;white-space:normal;min-width:230px;color:var(--mut
 .stage2 tbody th{text-align:left;font-weight:800;color:var(--ink);white-space:nowrap}
 .stage2 tbody td{text-align:right;font-weight:800;color:var(--ink)}
 .stage2 tbody tr:last-child td,.stage2 tbody tr:last-child th{border-bottom:none}
-@media(max-width:680px){.twopie{gap:12px}.pieCol{min-width:0;flex-basis:100%}.svgpie svg{max-width:230px}.stage2 th,.stage2 td{padding:8px 6px;font-size:13px}.catbar{height:44px}.mktctrl{flex-basis:100%;margin-left:0;margin-top:4px;justify-content:flex-end}}
+@media(max-width:680px){.twopie{gap:12px}.pieCol{min-width:0;flex-basis:100%}.svgpie svg{max-width:230px}.stage2 th,.stage2 td{padding:8px 6px;font-size:13px}.catbar{height:44px}.mktctrl{gap:6px}.mkstatus{font-size:10px;padding:2px 8px}.mkrefresh{padding:3px 9px;font-size:11px}}
 .flow{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
 .fcard{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 15px}
 .fcard .ft{font-size:12.5px;color:var(--mut);font-weight:800}
@@ -239,8 +239,8 @@ th,td{padding:6px 4px;font-size:12px}
 
 <div class="tabs">
   <div class="tab on" id="tab-tool" onclick="showView('tool')">🛠 評估工具</div>
-  <div class="tab" id="tab-assets" onclick="showView('assets')">💰 總資產配置</div>
-  <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬率總表</div>
+  <div class="tab" id="tab-assets" onclick="showView('assets')">💰 資產配置</div>
+  <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬回測</div>
   <span class="mktctrl" id="mktctrl"><span class="mkstatus" id="mkstatus">載入中…</span><button class="btn mkrefresh" onclick="fetchMkt()">↻ 重新抓價</button></span>
 </div>
 
@@ -1058,11 +1058,12 @@ let fbRef=null,fbUnsub=null,fbTimer=null,fbApplying=false;
 loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();
 fetchMkt();
 /* 手機下拉重新整理（pull-to-refresh）：下拉到頂放開 → 重新抓價 */
-(function(){const ptr=document.getElementById('ptr');if(!ptr)return;let sy=0,active=false,dist=0,busy=false;const TH=65,MAX=90;
+(function(){const ptr=document.getElementById('ptr'),deck=document.querySelector('.deck');if(!ptr||!deck)return;let sy=0,active=false,dist=0,busy=false;const TH=65,MAX=100;
   const top=()=>window.scrollY||document.documentElement.scrollTop||0;
+  const set=d=>{deck.style.transform=d>0?'translateY('+d+'px)':'';ptr.style.opacity=Math.min(d/TH,1);};
   document.addEventListener('touchstart',e=>{if(busy)return;if(top()<=0&&e.touches.length===1){sy=e.touches[0].clientY;active=true;dist=0;}},{passive:true});
-  document.addEventListener('touchmove',e=>{if(!active||busy)return;const dy=e.touches[0].clientY-sy;if(dy>0&&top()<=0){dist=Math.min(dy*0.5,MAX);ptr.style.transition='none';ptr.style.transform='translateY('+(dist-8)+'px)';ptr.textContent=dist>=TH?'放開以更新 ↻':'↓ 下拉重新整理';if(dy>4)e.preventDefault();}else{active=false;ptr.style.transition='transform .2s';ptr.style.transform='translateY(-100%)';}},{passive:false});
-  document.addEventListener('touchend',()=>{if(!active||busy)return;active=false;ptr.style.transition='transform .2s';if(dist>=TH){busy=true;ptr.textContent='更新中…';ptr.style.transform='translateY('+(TH-8)+'px)';Promise.resolve().then(()=>fetchMkt()).catch(()=>{}).finally(()=>{setTimeout(()=>{ptr.style.transform='translateY(-100%)';busy=false;},600);});}else{ptr.style.transform='translateY(-100%)';}});
+  document.addEventListener('touchmove',e=>{if(!active||busy)return;const dy=e.touches[0].clientY-sy;if(dy>0&&top()<=0){dist=Math.min(dy*0.5,MAX);deck.style.transition='none';set(dist);ptr.textContent=dist>=TH?'放開以更新 ↻':'↓ 下拉重新整理';if(dy>4)e.preventDefault();}else{active=false;deck.style.transition='transform .2s';set(0);}},{passive:false});
+  document.addEventListener('touchend',()=>{if(!active||busy)return;active=false;deck.style.transition='transform .25s';if(dist>=TH){busy=true;ptr.textContent='更新中…';deck.style.transform='translateY(44px)';ptr.style.opacity='1';Promise.resolve().then(()=>fetchMkt()).catch(()=>{}).finally(()=>{setTimeout(()=>{deck.style.transform='';ptr.style.opacity='0';busy=false;},600);});}else{set(0);}});
 })();
 /* 報酬率總表分頁：互比勾選（各表獨立） */
 document.querySelectorAll('.colck').forEach(function(ck){
