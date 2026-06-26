@@ -314,10 +314,8 @@ th,td{padding:6px 4px;font-size:12px}
   <table class="schtbl">
     <thead><tr><th>批次</th><th>日期</th><th>比例</th><th>說明</th></tr></thead>
     <tbody>
-      <tr><td class="c">第 1 批</td><td class="c">2026/6/12</td><td class="c">25%</td><td>已執行</td></tr>
-      <tr><td class="c">第 2 批</td><td class="c">2026/6/22</td><td class="c">25%</td><td>避開 6/17 FOMC、6/18 四巫、6/19 美股休市，事件後第一個交易日</td></tr>
-      <tr><td class="c">第 3 批</td><td class="c">2026/6/29</td><td class="c">25%</td><td>機械式：到點開盤就買、不看價格</td></tr>
-      <tr><td class="c">第 4 批</td><td class="c">2026/7/6</td><td class="c">25%</td><td>完成建倉，落在 7 月財報季前</td></tr>
+      <tr><td class="c">第 1 批<br>（前三批合併）</td><td class="c">2026/6/12<br>起</td><td class="c">75%</td><td>已建倉：原 6/12、6/22、6/29 三批合併為一筆（賣光美股後改複委託買回，解遺產稅）</td></tr>
+      <tr><td class="c">第 2 批<br>（待買）</td><td class="c">2026/7/6</td><td class="c">25%</td><td>最後一批，補齊至目標配置、完成建倉</td></tr>
     </tbody>
   </table>
   <div class="note">機械式：到點開盤就買、不擇時、拉開時間攤平成本。唯一例外：組合自第 1 批成本 −10% → 立即提前執行下一批，後續日期不變。</div>
@@ -579,32 +577,33 @@ function resetAlloc(){
   ASSETS.forEach(a=>{A[a[0]]=a[4];const s=document.getElementById('r_'+a[0]);if(s)s.value=a[4];});
   recalcAlloc();
 }
-/* ───────── ② 分批進場：4 批 × 25%，事件錨定（2026/6/12 定案） ───────── */
+/* ───────── ② 分批進場：2 批（前三批合併 75% + 待買 25%），2026/6/26 賣光重買後改 ───────── */
 const PLAN_DEF=[
-  {d:'2026-06-12',pct:25,note:'已開始進場，需補齊至 25%'},
-  {d:'2026-06-22',pct:25,note:'FOMC(6/17)＋四巫(6/18)、6/19 休市後第一個交易日'},
-  {d:'2026-06-29',pct:25,note:'機械式執行：到點就買，不看價格'},
-  {d:'2026-07-06',pct:25,note:'完成建倉，落在 7 月財報季前'}];
+  {d:'2026-06-12',pct:75,name:'前三批合併',note:'已建倉（原 6/12+6/22+6/29 三批合併）'},
+  {d:'2026-07-06',pct:25,name:'待買',note:'最後一批，補齊至目標配置、完成建倉'}];
 const LSKEY='erick_plan_2026_v3';
 let S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:true};
 /* 4批6週 → 4批4週 遷移：把舊日程(7/6,7/20)自動換成新日程(6/29,7/6)，不動已客製的日期 */
 function migrateDates(){if(S.dates&&S.dates[2]==='2026-07-06'&&S.dates[3]==='2026-07-20'){S.dates[2]='2026-06-29';S.dates[3]='2026-07-06';return true;}return false;}
-/* 2026-06-26 賣光美股重買(複委託，解遺產稅)：舊 4 批 DCA 記錄歸零，改填現有實際持倉。
-   拆進第 1、2 批（同均價→加權均價不變），下一批正確指向第 3 批 6/29。一次性，rebuy0626 旗標防重跑。 */
+/* 2026-06-26 賣光美股重買(複委託，解遺產稅)＋改 2 批結構：舊 4 批 DCA 記錄歸零。
+   目前實際持倉全部放進第 1 批（前三批合併 75%），第 2 批（待買 25%）留空。日程改 2 批。
+   一次性，rebuy0626v2 旗標防重跑（v2＝2 批版，蓋掉先前 v1 的 4 批拆法）。 */
 function migrateRebuy(){
-  if(S.rebuy0626)return false;
+  if(S.rebuy0626v2)return false;
   S.fills={
-    '0_qqq':{p:709.8833,s:8},'1_qqq':{p:709.8833,s:4},
-    '0_voo':{p:675.0909,s:7},'1_voo':{p:675.0909,s:4},
-    '0_googl':{p:342.8556,s:11},'1_googl':{p:342.8556,s:14},
-    '0_t2330':{p:2406.6,s:39},'1_t2330':{p:2406.6,s:31},
-    '0_t0050':{p:106.99,s:584},'1_t0050':{p:106.99,s:433}
+    '0_qqq':{p:709.8833,s:12},
+    '0_voo':{p:675.0909,s:11},
+    '0_googl':{p:342.8556,s:25},
+    '0_t2330':{p:2406.6,s:70},
+    '0_t0050':{p:106.99,s:1017}
   };
-  S.rebuy0626=true;
+  S.dates=['2026-06-12','2026-07-06'];
+  S.open=[false,false];
+  S.rebuy0626v2=true;
   return true;
 }
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626)S.rebuy0626=sv.rebuy0626;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v2)S.rebuy0626v2=sv.rebuy0626v2;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
@@ -639,7 +638,7 @@ function buildPlan(){
         '<td class="n" id="fv_'+i+'_'+k+'">—</td>'+
         '<td class="n b" id="fa_'+i+'_'+k+'">—</td></tr>';
     });
-    d.innerHTML='<div class="bkhd"><span class="bn">第 '+(i+1)+' 批 · 25%</span>'+
+    d.innerHTML='<div class="bkhd"><span class="bn">第 '+(i+1)+' 批 · '+(p.pct||0)+'%'+(p.name?'（'+p.name+'）':'')+'</span>'+
       '<span class="bkf">日期 <input type="date" data-pi="'+i+'" value="'+S.dates[i]+'"></span>'+
       '<span class="zone" id="bz_'+i+'"></span>'+
       '<button class="btn ghost" style="margin-left:auto;flex:0 0 auto" id="tg_'+i+'" onclick="togglePlan('+i+')">'+(S.open[i]?'▲ 收合':'▼ 展開填買入')+'</button>'+
@@ -664,17 +663,25 @@ function recalcPlan(){
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
   /* 標準目標固定；前批超買/少買結轉到「第一個累計未達標的批」(activeIdx)，部分輸入也不跑掉；少買在進度條以橘色缺口顯示 */
   const NB=PLAN_DEF.length;
-  const stdT={};ASSETS.forEach(a=>{stdT[a[0]]=fund*A[a[0]]/hold/NB;});
-  const stdBatch=ASSETS.reduce((s,a)=>s+stdT[a[0]],0);
+  /* 批次可不等額：依各批 pct 加權（前三批合併 75% + 待買 25%）。wf=各批比例(和=1)，wcum=累計比例 */
+  const W=PLAN_DEF.map(p=>(p.pct!=null?p.pct:100/NB));
+  const Wt=W.reduce((s,x)=>s+x,0)||100;
+  const wf=W.map(x=>x/Wt);
+  const wcum=[];{let c=0;for(let i=0;i<NB;i++){c+=wf[i];wcum[i]=c;}}
+  const totalT={};ASSETS.forEach(a=>{totalT[a[0]]=fund*A[a[0]]/hold;});/* 各檔最終總目標$ */
+  const stdTi=(i,k)=>totalT[k]*wf[i];/* 第 i 批、k 檔目標$ */
+  const stdBatchi=i=>fund*wf[i];/* 第 i 批總目標$ */
   const batchAct=PLAN_DEF.map((p,i)=>{const m={};ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const f=getFill(i,k);m[k]=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;});return m;});
-  let activeIdx=-1;{let c=0;for(let i=0;i<NB;i++){let bt=0;ASSETS.forEach(a=>bt+=batchAct[i][a[0]]);c+=bt;if(c<stdBatch*(i+1)-1){activeIdx=i;break;}}}
+  let activeIdx=-1;{let c=0;for(let i=0;i<NB;i++){let bt=0;ASSETS.forEach(a=>bt+=batchAct[i][a[0]]);c+=bt;if(c<fund*wcum[i]-1){activeIdx=i;break;}}}
   /* 結轉＝累計(之前實投−之前標準)：活動批(含之前)顯示完整正負(超買/缺口都遞延到下一批)；活動批之後的未來批只顯示「正的超買預填」，避免未填批跳出假缺口 */
-  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const c=b-i*stdT[k];return (activeIdx<0||i<=activeIdx)?c:Math.max(0,c);};
+  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const stdPrev=totalT[k]*(i>0?wcum[i-1]:0);const c=b-stdPrev;return (activeIdx<0||i<=activeIdx)?c:Math.max(0,c);};
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
+    const stdT={};ASSETS.forEach(a=>{stdT[a[0]]=stdTi(i,a[0]);});/* 本批各檔目標(loop-local，shadow) */
+    const stdBatch=stdBatchi(i);/* 本批總目標(loop-local) */
     const tgtB=stdBatch;
     const ae=document.getElementById('bamt_'+i);if(ae)ae.textContent='$'+f0(tgtB);
-    const cu=document.getElementById('bcum_'+i);if(cu)cu.textContent='$'+f0(stdBatch*(i+1));
+    const cu=document.getElementById('bcum_'+i);if(cu)cu.textContent='$'+f0(fund*wcum[i]);
     let inv=0,progTot=0;const progMap={};
     ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';
       const tgtT=stdT[k];
@@ -726,7 +733,7 @@ function recalcPlan(){
     const due=(st!=='done'&&S.dates[i]<=today);
     const card=document.getElementById('bk_'+i);const bz=document.getElementById('bz_'+i);
     if(card){card.className='bk'+(st==='done'?' done':(due?' duedate':''));
-      card.style.display=(S.hideF&&Math.abs(progTot)<1&&inv<=0&&i!==activeIdx&&S.dates[i]>today)?'none':'';}
+      card.style.display=(NB>2&&S.hideF&&Math.abs(progTot)<1&&inv<=0&&i!==activeIdx&&S.dates[i]>today)?'none':'';}
     if(bz){const lb=st==='done'?STL.done:(st==='part'?[STL.part[0]+' '+ach.toFixed(0)+'%',STL.part[1]]:(due?STL.due:STL.wait));
       bz.textContent=lb[0];bz.className='zone '+lb[1];}
     if(next===null&&st!=='done')next=i;
@@ -734,7 +741,7 @@ function recalcPlan(){
   const nb=document.getElementById('nextbatch');
   if(nb)nb.textContent=next===null?'已全部執行完畢 ✓':'第 '+(next+1)+' 批 · '+S.dates[next];
   const hb=document.getElementById('hidebtn');
-  if(hb)hb.textContent=S.hideF?'▦ 顯示全部批次':'▦ 隱藏未到期批次';
+  if(hb){hb.style.display=NB>2?'':'none';hb.textContent=S.hideF?'▦ 顯示全部批次':'▦ 隱藏未到期批次';}
   recalcHold();
 }
 /* 持倉追蹤（均價＋股數，浮動買入）＋例外條款監測 */
@@ -1113,7 +1120,7 @@ function fbApplyRemote(d){
   try{
     if(d.dates)S.dates=d.dates;
     _mig=migrateDates();
-    S.rebuy0626=d.rebuy0626;/* 旗標以雲端為準：雲端還沒做過 rebuy 遷移時，下面就會把舊 fills 覆寫成現有持倉並回寫 */
+    S.rebuy0626v2=d.rebuy0626v2;/* 旗標以雲端為準：雲端還沒做過 v2(2批) 遷移時，下面就會把舊 fills/日程覆寫成現有持倉並回寫 */
     if(d.fills)S.fills=d.fills;
     if(migrateRebuy())_mig=true;
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
@@ -1130,7 +1137,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626:S.rebuy0626||false,t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v2:S.rebuy0626v2||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
