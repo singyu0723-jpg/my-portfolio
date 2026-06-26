@@ -589,10 +589,25 @@ const LSKEY='erick_plan_2026_v3';
 let S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:true};
 /* 4批6週 → 4批4週 遷移：把舊日程(7/6,7/20)自動換成新日程(6/29,7/6)，不動已客製的日期 */
 function migrateDates(){if(S.dates&&S.dates[2]==='2026-07-06'&&S.dates[3]==='2026-07-20'){S.dates[2]='2026-06-29';S.dates[3]='2026-07-06';return true;}return false;}
+/* 2026-06-26 賣光美股重買(複委託，解遺產稅)：舊 4 批 DCA 記錄歸零，改填現有實際持倉。
+   拆進第 1、2 批（同均價→加權均價不變），下一批正確指向第 3 批 6/29。一次性，rebuy0626 旗標防重跑。 */
+function migrateRebuy(){
+  if(S.rebuy0626)return false;
+  S.fills={
+    '0_qqq':{p:709.8833,s:8},'1_qqq':{p:709.8833,s:4},
+    '0_voo':{p:675.0909,s:7},'1_voo':{p:675.0909,s:4},
+    '0_googl':{p:342.8556,s:11},'1_googl':{p:342.8556,s:14},
+    '0_t2330':{p:2406.6,s:39},'1_t2330':{p:2406.6,s:31},
+    '0_t0050':{p:106.99,s:584},'1_t0050':{p:106.99,s:433}
+  };
+  S.rebuy0626=true;
+  return true;
+}
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626)S.rebuy0626=sv.rebuy0626;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
+if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
 function save(){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}if(typeof fbSave==='function')fbSave();}
 const STL={wait:['待執行','st-wait'],due:['今日應執行','st-due'],part:['部分執行','st-part'],done:['已執行','st-done']};
 function todayStr(){return new Date().toISOString().slice(0,10);}
@@ -1098,7 +1113,9 @@ function fbApplyRemote(d){
   try{
     if(d.dates)S.dates=d.dates;
     _mig=migrateDates();
+    S.rebuy0626=d.rebuy0626;/* 旗標以雲端為準：雲端還沒做過 rebuy 遷移時，下面就會把舊 fills 覆寫成現有持倉並回寫 */
     if(d.fills)S.fills=d.fills;
+    if(migrateRebuy())_mig=true;
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
       Object.keys(m).forEach(k=>{if(d.assets[k]!=null){const e=document.getElementById(m[k]);if(e&&document.activeElement!==e)e.value=d.assets[k];}});}
     const f=document.getElementById('fund'),x=document.getElementById('fx');
@@ -1113,7 +1130,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626:S.rebuy0626||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
