@@ -533,6 +533,12 @@ const ASSETS=[['qqq','QQQ','#0d9488','us',30],['voo','VOO','#3a8f6f','us',25],['
   ['t2330','台積電 2330','#bd8420','tw',15],['t0050','元大 0050','#d9a35b','tw',10]];
 const KEYS=ASSETS.map(a=>a[0]);
 const A={};ASSETS.forEach(a=>A[a[0]]=a[4]);
+/* 舊美股帳戶「賣舊買新」已實現虧損（原幣 USD，正值＝虧損金額）。加進成本基礎，讓損益反映真實總投入（含已實現虧損），
+   但「達成率／建倉進度／還要買幾股」仍用真實重買成本。2026-06-26 精算：
+   QQQ 賣11.8@711(8389.80) − 買8609.986 = −220.186；
+   VOO 賣10.65@675(7188.75) − 買7307.0275 = −118.2775；
+   GOOGL 全平倉 賣15857.343 − 買16231.4026 = −374.0596。台股 2330/0050 未動＝0。 */
+const RLOSS={qqq:220.186,voo:118.2775,googl:374.0596,t2330:0,t0050:0};
 function gv(id){return parseFloat(document.getElementById(id).value)||0;}
 function buildAlloc(){
   const wrap=document.getElementById('allocrows');wrap.innerHTML='';
@@ -587,23 +593,24 @@ let S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:
 function migrateDates(){if(S.dates&&S.dates[2]==='2026-07-06'&&S.dates[3]==='2026-07-20'){S.dates[2]='2026-06-29';S.dates[3]='2026-07-06';return true;}return false;}
 /* 2026-06-26 賣光美股重買(複委託，解遺產稅)＋改 2 批結構：舊 4 批 DCA 記錄歸零。
    目前實際持倉全部放進第 1 批（前三批合併 75%），第 2 批（待買 25%）留空。日程改 2 批。
-   一次性，rebuy0626v2 旗標防重跑（v2＝2 批版，蓋掉先前 v1 的 4 批拆法）。 */
+   一次性，rebuy0626v3 旗標防重跑（v3＝2 批版＋均價取小數兩位，蓋掉先前版本）。 */
 function migrateRebuy(){
-  if(S.rebuy0626v2)return false;
+  if(S.rebuy0626v3)return false;
+  /* 均價取小數兩位（真實重買均價；已實現虧損由 RLOSS 另存精確值，損益不受影響） */
   S.fills={
-    '0_qqq':{p:709.8833,s:12},
-    '0_voo':{p:675.0909,s:11},
-    '0_googl':{p:342.8556,s:25},
-    '0_t2330':{p:2406.6,s:70},
+    '0_qqq':{p:709.88,s:12},
+    '0_voo':{p:675.09,s:11},
+    '0_googl':{p:342.86,s:25},
+    '0_t2330':{p:2406.60,s:70},
     '0_t0050':{p:106.99,s:1017}
   };
   S.dates=['2026-06-12','2026-07-06'];
   S.open=[false,false];
-  S.rebuy0626v2=true;
+  S.rebuy0626v3=true;
   return true;
 }
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v2)S.rebuy0626v2=sv.rebuy0626v2;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v3)S.rebuy0626v3=sv.rebuy0626v3;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
@@ -747,6 +754,7 @@ function recalcPlan(){
 /* 持倉追蹤（均價＋股數，浮動買入）＋例外條款監測 */
 const MKTMAP={t2330:'台積電 2330',t0050:'元大 0050',qqq:'QQQ',voo:'VOO',googl:'GOOGL'};
 function curPrice(k){const nm=MKTMAP[k];const m=MKT.find(x=>x[0]===nm);return m?m[2]:null;}
+function curSess(k){const nm=MKTMAP[k];const m=MKT.find(x=>x[0]===nm);return m?(m[4]||''):'';}
 function buildHold(){
   const tb=document.getElementById('holdbody');if(!tb)return;tb.innerHTML='';
   ASSETS.forEach(a=>{
@@ -765,24 +773,32 @@ function buildHold(){
 }
 function recalcHold(){
   const fund=gv('fund'),fx=gv('fx')||32;
-  let cost=0,val=0;
+  let cost=0,val=0,adjCost=0,rlossTot=0;
   ASSETS.forEach(a=>{
     const k=a[0];const us=a[3]==='us';const mult=us?fx:1;
     /* 由各批次買入彙總 */
     let sh=0,tc=0;
     PLAN_DEF.forEach((p,i)=>{const f=getFill(i,k);if(f.p>0&&f.s>0){sh+=f.s;tc+=f.p*f.s;}});
-    const avg=sh>0?tc/sh:null;const cur=curPrice(k);
+    const rl=RLOSS[k]||0;                         /* 該檔已實現虧損(原幣) */
+    const avg=sh>0?tc/sh:null;                     /* 真實重買均價 */
+    const adjAvg=sh>0?(tc+rl)/sh:null;             /* 調整後均價(含已實現虧損) */
+    const cur=curPrice(k);
     const tgt=fund*A[k]/100;
-    const inv=tc*mult;
+    const inv=tc*mult;                             /* 實際投入(達成/進度用) */
+    const adjInv=(tc+rl)*mult;                     /* 調整後成本(損益用) */
     const cv=(isFinite(cur)&&cur>0&&sh>0)?cur*sh*mult:0;
     const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='<b>'+(+A[k].toFixed(0))+'%</b>';
     const she=document.getElementById('sh_'+k);if(she)she.innerHTML=sh>0?'<b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股':'—';
-    const ave=document.getElementById('avg_'+k);if(ave)ave.textContent=(avg!=null)?(+avg.toFixed(2)).toLocaleString():'—';
-    const cue=document.getElementById('cur_'+k);if(cue)cue.innerHTML=(isFinite(cur)&&cur>0)?(+cur.toFixed(2)).toLocaleString():'<span class="mut">抓取中</span>';
+    const ave=document.getElementById('avg_'+k);
+    if(ave){if(adjAvg==null)ave.textContent='—';
+      else if(rl>0){const tip='重買均價 '+(+avg.toFixed(2)).toLocaleString()+(us?' US$':'')+' ＋ 已實現虧損 '+(us?'US$':'NT$')+(+rl.toFixed(2)).toLocaleString()+' ÷ '+(+sh.toFixed(2))+' 股 ＝ 調整後 '+(+adjAvg.toFixed(2)).toLocaleString();
+        ave.innerHTML='<span class="tip" tabindex="0" data-tip="'+tip+'">'+(+adjAvg.toFixed(2)).toLocaleString()+'<span class="mut" style="font-size:10px;vertical-align:super">＊</span></span>';}
+      else ave.textContent=(+adjAvg.toFixed(2)).toLocaleString();}
+    const cue=document.getElementById('cur_'+k);if(cue){const ss=curSess(k);cue.innerHTML=(isFinite(cur)&&cur>0)?((+cur.toFixed(2)).toLocaleString()+(ss?' <span class="mut" style="font-size:10px;font-weight:700">'+ss+'</span>':'')):'<span class="mut">抓取中</span>';}
     const pde=document.getElementById('pld_'+k);
-    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-inv;pde.textContent=(pld>=0?'+':'−')+'$'+f0(Math.abs(pld));pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
+    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-adjInv;pde.textContent=(pld>=0?'+':'−')+'$'+f0(Math.abs(pld));pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
     const pe=document.getElementById('pl_'+k);
-    if(pe){if(avg>0&&isFinite(cur)&&cur>0){const pl=(cur/avg-1)*100;
+    if(pe){if(adjAvg>0&&isFinite(cur)&&cur>0){const pl=(cur/adjAvg-1)*100;
       pe.textContent=(pl>=0?'+':'−')+Math.abs(pl).toFixed(1)+'%';pe.className='n b '+(pl>=0?'up':'dn');}
       else{pe.textContent='—';pe.className='n b';}}
     const ach2=tgt>0?inv/tgt*100:0;
@@ -790,13 +806,13 @@ function recalcHold(){
     if(ae2){const over=ach2>=102;const tip='已投入 $'+f0(inv)+' ／ 總目標 $'+f0(tgt);
       ae2.innerHTML='<span class="tip'+(over?' up':(ach2>=98?' dn':''))+'" tabindex="0" data-tip="'+tip+'">'+ach2.toFixed(0)+'%'+(over?' 超買':'')+'</span>';
       ae2.className='n b';}
-    if(inv>0){cost+=inv;val+=cv;}
+    if(inv>0){cost+=inv;val+=cv;adjCost+=adjInv;rlossTot+=rl*mult;}
   });
   /* 總體買入達成率 vs 應達進度 */
   const pb=document.getElementById('progbox');
   if(pb){const fund2=gv('fund');const today=todayStr();
-    let dueN=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=today)dueN++;});
-    const expPct=dueN*25;const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
+    let expPct=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=today)expPct+=(p.pct||0);});
+    const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
     let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let any=false;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)any=true;});if(!any){nextI=i;nextD=S.dates[i];break;}}
     pb.innerHTML='<div style="margin:14px 0 4px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:4px">'+
@@ -810,12 +826,13 @@ function recalcHold(){
   const exbox=document.getElementById('exbox');
   const box=document.getElementById('pnlbox');if(!box)return;
   if(cost<=0||val<=0){box.innerHTML='<div class="note" style="border:none;padding-top:2px">填入各標的成交均價與股數後，自動計算已投入、達成率、損益與例外條款。</div>';if(exbox)exbox.innerHTML='';return;}
-  const port=(val/cost-1)*100;const pnl=val-cost;const plc=pnl>=0?'var(--up)':'var(--dn)';
+  const port=(val/adjCost-1)*100;const pnl=val-adjCost;const plc=pnl>=0?'var(--up)':'var(--dn)';
   box.innerHTML='<div class="pnlcard"><div class="pnlnums">'+
-    '<div class="pnlcell"><span class="pl">成本</span><b>$'+f0(cost)+'</b></div>'+
+    '<div class="pnlcell"><span class="pl">成本'+(rlossTot>0?'＊':'')+'</span><b>$'+f0(adjCost)+'</b></div>'+
     '<div class="pnlcell"><span class="pl">市值</span><b>$'+f0(val)+'</b></div>'+
     '<div class="pnlcell"><span class="pl">損益</span><b style="color:'+plc+'">'+(pnl>=0?'+':'−')+'$'+f0(Math.abs(pnl))+'</b></div>'+
-    '<div class="pnlcell"><span class="pl">報酬率</span><b style="color:'+plc+'">'+(port>=0?'+':'')+port.toFixed(1)+'%</b></div></div></div>';
+    '<div class="pnlcell"><span class="pl">報酬率</span><b style="color:'+plc+'">'+(port>=0?'+':'')+port.toFixed(1)+'%</b></div></div></div>'+
+    (rlossTot>0?'<div class="note" style="border:none;padding:6px 0 0;font-size:11px">＊成本與損益已含舊美股帳戶「賣舊買新」的已實現虧損 −$'+f0(rlossTot)+'（QQQ/VOO/GOOGL）。達成率與建倉進度仍以真實投入 $'+f0(cost)+' 計。</div>':'');
   if(exbox)exbox.innerHTML=(port<=-10?'<div class="warnbox">🚨 例外條款觸發：組合相對成本 '+port.toFixed(1)+'%（≤ −10%）→ 立即提前執行下一批！（後續日期不變）</div>':'<div class="okbox">✓ 未觸發例外條款（距 −10% 門檻還有 '+(port+10).toFixed(1)+'%）</div>');
 }
 function resetPlan(){
@@ -862,24 +879,48 @@ function recalcMkt(){
 }
 const PROXIES=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=','https://api.codetabs.com/v1/proxy/?quest='];
 async function yget(sym){
-  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=1mo&interval=1d';
+  /* includePrePost=true → 取得盤後/盤前價，美股夜盤跌看得到；marketState 判斷現在是哪個時段 */
+  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=1mo&interval=1d&includePrePost=true';
   for(const px of PROXIES){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
       const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
       const j=await res.json();const r=j&&j.chart&&j.chart.result&&j.chart.result[0];if(!r)continue;
-      const price=r.meta&&r.meta.regularMarketPrice;
+      const m=r.meta||{};let price=m.regularMarketPrice;let sess='';
+      const post=parseFloat(m.postMarketPrice),pre=parseFloat(m.preMarketPrice),ms=m.marketState;
+      if((ms==='POST'||ms==='POSTPOST'||ms==='CLOSED')&&isFinite(post)){price=post;sess='盤後';}
+      else if((ms==='PRE'||ms==='PREPRE')&&isFinite(pre)){price=pre;sess='盤前';}
       let highs=[];try{highs=r.indicators.quote[0].high.filter(x=>x!=null);}catch(e){}
       const hi=highs.length?Math.max.apply(null,highs.concat([price||0])):price;
-      if(isFinite(price))return{price:price,high:hi};
+      if(isFinite(price))return{price:price,high:hi,sess:sess};
+    }catch(e){}
+  }
+  return null;
+}
+/* 台股證交所 MIS 準即時報價（盤中每幾秒更新，遠優於 Yahoo 20 分延遲）。多檔一次抓，沒開 CORS 故走代理。 */
+async function twMis(codes){
+  const ch=codes.map(c=>'tse_'+c+'.tw').join('|');
+  const url='https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='+encodeURIComponent(ch)+'&json=1&delay=0&_='+Date.now();
+  for(const px of PROXIES){
+    try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
+      const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
+      const j=await res.json();const arr=j&&j.msgArray;if(!arr||!arr.length)continue;
+      const out={};arr.forEach(o=>{const z=parseFloat(o.z),pz=parseFloat(o.pz),y=parseFloat(o.y);
+        const price=isFinite(z)?z:(isFinite(pz)?pz:(isFinite(y)?y:null));if(price!=null)out[o.c]=price;});
+      if(Object.keys(out).length)return out;
     }catch(e){}
   }
   return null;
 }
 async function fetchMkt(){
   const st=document.getElementById('mkstatus');if(st)st.textContent='抓價中…';let ok=0;
-  const [rs,fxr]=await Promise.all([Promise.all(MKT.map(m=>yget(m[1]))),yget('USDTWD=X')]);
+  const twCodes=MKT.filter(m=>/\.TW$/.test(m[1])).map(m=>m[1].replace('.TW',''));
+  const [rs,fxr,tw]=await Promise.all([Promise.all(MKT.map(m=>yget(m[1]))),yget('USDTWD=X'),twCodes.length?twMis(twCodes):Promise.resolve(null)]);
   rs.forEach((r,i)=>{const q=document.getElementById('mq_'+i);
-    if(r){MKT[i][2]=Math.round(r.price*100)/100;MKT[i][3]=Math.round(r.high*100)/100;
+    let price=r?r.price:null,high=r?r.high:null,sess=r?r.sess:'';
+    const sym=MKT[i][1];
+    /* 台股優先用證交所 MIS 準即時價（高點仍用 Yahoo 的近月高，位階回檔%才有意義）；MIS 失敗則沿用 Yahoo */
+    if(tw&&/\.TW$/.test(sym)){const code=sym.replace('.TW','');if(isFinite(tw[code])){price=tw[code];sess='即時';}}
+    if(price!=null&&isFinite(price)){MKT[i][2]=Math.round(price*100)/100;if(high!=null&&isFinite(high))MKT[i][3]=Math.round(high*100)/100;MKT[i][4]=sess||'';
       const ri=document.querySelector('input[data-mi="'+i+'"][data-mf="2"]');if(ri)ri.value=MKT[i][2];
       const hii=document.querySelector('input[data-mi="'+i+'"][data-mf="3"]');if(hii)hii.value=MKT[i][3];
       if(q)q.textContent='🟢';ok++;}
@@ -951,8 +992,9 @@ function renderPnlChart(){
   while(d<=end){days.push(dstr(d));d.setDate(d.getDate()+1);}
   const closeOn=(sym,ds)=>{const h=HIST[sym];if(!h)return null;if(h[ds]!=null)return h[ds];let bd='',bv=null;for(const k in h){if(k<=ds&&k>bd){bd=k;bv=h[k];}}return bv;};
   const cost=[],val=[];
-  days.forEach(ds=>{let c=0,v=0,has=false;
-    PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds)ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)c+=f.p*f.s*((a[3]==='us')?fx:1);});});
+  days.forEach(ds=>{let c=0,v=0,has=false;const seenUS={};
+    PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds)ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0){c+=f.p*f.s*((a[3]==='us')?fx:1);seenUS[a[0]]=(a[3]==='us');}});});
+    ASSETS.forEach(a=>{if(seenUS[a[0]]!==undefined){const rl=RLOSS[a[0]]||0;if(rl)c+=rl*(seenUS[a[0]]?fx:1);}});/* 成本含已實現虧損，與持倉表/損益卡一致 */
     items.forEach(it=>{let sh=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds){const f=getFill(i,it.k);if(f.p>0&&f.s>0)sh+=f.s;}});
       if(sh>0){let px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0){v+=px*sh*(it.us?fx:1);has=true;}}});
     cost.push(c);val.push(has?v:null);});
@@ -989,7 +1031,7 @@ function renderPnlChart(){
       '<rect x="'+PL+'" y="'+PT+'" width="'+(W-PL-PR)+'" height="'+(H-PT-PB)+'" fill="transparent" style="cursor:crosshair"/>'+
     '</svg>'+
     '<div class="pnltip" id="pnltip"></div>'+
-    '<div class="catrow" style="margin-top:8px"><span><b style="color:#bd8420">▬▬</b> 成本（累計投入，逐批墊高）</span><span><b style="color:'+vline+'">▬▬</b> 市值（持股×當日收盤'+(valPath?'':'，抓價後顯示')+'）</span></div>';
+    '<div class="catrow" style="margin-top:8px"><span><b style="color:#bd8420">▬▬</b> 成本（累計投入＋已實現虧損）</span><span><b style="color:'+vline+'">▬▬</b> 市值（持股×當日收盤'+(valPath?'':'，抓價後顯示')+'）</span></div>';
 }
 async function buildPnlChart(){
   renderPnlChart();
@@ -1120,7 +1162,7 @@ function fbApplyRemote(d){
   try{
     if(d.dates)S.dates=d.dates;
     _mig=migrateDates();
-    S.rebuy0626v2=d.rebuy0626v2;/* 旗標以雲端為準：雲端還沒做過 v2(2批) 遷移時，下面就會把舊 fills/日程覆寫成現有持倉並回寫 */
+    S.rebuy0626v3=d.rebuy0626v3;/* 旗標以雲端為準：雲端還沒做過 v3 遷移時，下面就會把舊 fills/日程覆寫成現有持倉(2位均價)並回寫 */
     if(d.fills)S.fills=d.fills;
     if(migrateRebuy())_mig=true;
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
@@ -1137,7 +1179,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v2:S.rebuy0626v2||false,t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v3:S.rebuy0626v3||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
