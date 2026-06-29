@@ -896,16 +896,30 @@ async function yget(sym){
   }
   return null;
 }
-/* 台股證交所 MIS 準即時報價（盤中每幾秒更新，遠優於 Yahoo 20 分延遲）。多檔一次抓，沒開 CORS 故走代理。 */
+/* 從 MIS 一筆挑出最貼近現價的價：最新成交 z 優先；盤中沒撮合(z='-')就用最佳買/賣價中價(b/a 第一檔)；都沒有才退昨收 y。 */
+function misPrice(o){
+  const z=parseFloat(o.z);if(isFinite(z)&&z>0)return z;
+  const bid=parseFloat((o.b||'').split('_')[0]),ask=parseFloat((o.a||'').split('_')[0]);
+  if(isFinite(bid)&&bid>0&&isFinite(ask)&&ask>0)return Math.round((bid+ask)/2*100)/100;
+  if(isFinite(ask)&&ask>0)return ask;
+  if(isFinite(bid)&&bid>0)return bid;
+  const pz=parseFloat(o.pz);if(isFinite(pz)&&pz>0)return pz;
+  const y=parseFloat(o.y);if(isFinite(y)&&y>0)return y;
+  return null;
+}
+/* 台股證交所 MIS 準即時報價（盤中每幾秒更新，遠優於 Yahoo 20 分延遲）。多檔一次抓，沒開 CORS 故走代理。
+   代理順序：codetabs / corsproxy 優先（較不快取），易快取的 allorigins 殿後，避免拿到舊快照。 */
+const MISPROX=['https://api.codetabs.com/v1/proxy/?quest=','https://corsproxy.io/?url=','https://api.allorigins.win/raw?url='];
 async function twMis(codes){
   const ch=codes.map(c=>'tse_'+c+'.tw').join('|');
   const url='https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='+encodeURIComponent(ch)+'&json=1&delay=0&_='+Date.now();
-  for(const px of PROXIES){
+  for(const px of MISPROX){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
       const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
       const j=await res.json();const arr=j&&j.msgArray;if(!arr||!arr.length)continue;
-      const out={};arr.forEach(o=>{const z=parseFloat(o.z),pz=parseFloat(o.pz),y=parseFloat(o.y);
-        const price=isFinite(z)?z:(isFinite(pz)?pz:(isFinite(y)?y:null));if(price!=null)out[o.c]=price;});
+      const out={};window.TWDBG={};arr.forEach(o=>{const price=misPrice(o);
+        window.TWDBG[o.c]={z:o.z,bid:(o.b||'').split('_')[0],ask:(o.a||'').split('_')[0],y:o.y,用:price,時間:o.tlong?new Date(+o.tlong).toLocaleTimeString('zh-TW'):o.t};
+        if(price!=null)out[o.c]=price;});
       if(Object.keys(out).length)return out;
     }catch(e){}
   }
