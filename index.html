@@ -680,8 +680,8 @@ function recalcPlan(){
   const stdBatchi=i=>fund*wf[i];/* 第 i 批總目標$ */
   const batchAct=PLAN_DEF.map((p,i)=>{const m={};ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const f=getFill(i,k);m[k]=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;});return m;});
   let activeIdx=-1;{let c=0;for(let i=0;i<NB;i++){let bt=0;ASSETS.forEach(a=>bt+=batchAct[i][a[0]]);c+=bt;if(c<fund*wcum[i]-1){activeIdx=i;break;}}}
-  /* 結轉＝累計(之前實投−之前標準)：活動批(含之前)顯示完整正負(超買/缺口都遞延到下一批)；活動批之後的未來批只顯示「正的超買預填」，避免未填批跳出假缺口 */
-  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const stdPrev=totalT[k]*(i>0?wcum[i-1]:0);const c=b-stdPrev;return (activeIdx<0||i<=activeIdx)?c:Math.max(0,c);};
+  /* 結轉＝累計(之前實投−之前標準)，完整正負一律折入本批進度：超買→預填進度條；缺口→負進度(本批買入先吃掉缺口) */
+  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const stdPrev=totalT[k]*(i>0?wcum[i-1]:0);return b-stdPrev;};
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
     const isLast=(i===NB-1);
@@ -698,17 +698,15 @@ function recalcPlan(){
       const ft=document.getElementById('ft_'+i+'_'+k);
       if(ft)ft.innerHTML='$'+f0(tgtT)+(us?' <span class="mut usdhint" style="font-size:11px">US$'+f0(tgtT/fx)+'</span>':'');
       const own=batchAct[i][k];inv+=own;
-      const prog=(isLast?0:carryOf(i,k))+own;progMap[k]=prog;progTot+=prog;
+      const prog=carryOf(i,k)+own;progMap[k]=prog;progTot+=prog;
       const fv=document.getElementById('fv_'+i+'_'+k);if(fv)fv.textContent=own>0?'$'+f0(own):'—';
       const fa=document.getElementById('fa_'+i+'_'+k);
       if(fa){if(prog===0&&!isLast){fa.innerHTML='—';fa.className='n b';}
-        else{const pc=tgtT>0?prog/tgtT*100:0;const ov=pc>=102;const gap=tgtT-prog;let tip,cls;
-          const cs=cPrev[k];const cnote=(cs<-1)?'；另前批缺 $'+f0(-cs)+' 待補':((cs>1)?'；前批超買 $'+f0(cs)+' 可少買':'');
-          if(!isLast&&prog<0){tip='前批少買，本檔需多補 NT$'+f0(-prog)+' 追上進度';cls='amb';}
-          else if(gap<=0){tip=ov?('超買 NT$'+f0(-gap)):'✓ 已達目標';cls=ov?'up':'dn';}
-          else{const pxN=curPrice(k);const px=(pxN&&pxN>0)?pxN:(getFill(i,k).p||0);const pxTWD=px*(us?fx:1);cls=(pc>=98?'dn':'');
-            if(pxTWD>0){const sh=gap/pxTWD;tip='還要買 ≈'+(us?sh.toFixed(2):Math.ceil(sh))+' 股（本批 NT$'+f0(gap)+(us?' / US$'+f0(gap/fx):'')+'）'+cnote;}else tip='還差 NT$'+f0(gap)+cnote;}
-          fa.innerHTML='<span class="tip'+(cls?' '+cls:'')+'" tabindex="0" data-tip="'+tip+'">'+Math.max(0,pc).toFixed(0)+'%'+(ov?' 超買':((!isLast&&prog<0)?' 缺':''))+'</span>';fa.className='n b';}}
+        else{const pc=tgtT>0?prog/tgtT*100:0;const ov=pc>=102;const short=prog<0;const gap=tgtT-prog;let tip,cls;
+          if(gap<=0){tip=ov?('超買 NT$'+f0(-gap)):'✓ 已達目標';cls=ov?'up':'dn';}
+          else{const pxN=curPrice(k);const px=(pxN&&pxN>0)?pxN:(getFill(i,k).p||0);const pxTWD=px*(us?fx:1);cls=short?'amb':(pc>=98?'dn':'');
+            if(pxTWD>0){const sh=gap/pxTWD;tip='還要買 ≈'+(us?sh.toFixed(2):Math.ceil(sh))+' 股（NT$'+f0(gap)+(us?' / US$'+f0(gap/fx):'')+'）'+(short?'，已含補前批缺口':'');}else tip='還差 NT$'+f0(gap);}
+          fa.innerHTML='<span class="tip'+(cls?' '+cls:'')+'" tabindex="0" data-tip="'+tip+'">'+pc.toFixed(0)+'%'+(ov?' 超買':(short?' 缺':(pc>=98?' 達標':'')))+'</span>';fa.className='n b';}}
     });
     const ach=stdBatch>0?inv/stdBatch*100:0;
     const achShown=stdBatch>0?progTot/stdBatch*100:0;
@@ -723,13 +721,11 @@ function recalcPlan(){
         const fillC=short?'var(--amb)':(over?'var(--up)':a[2]);
         const col=short?'var(--amb)':(over?'var(--up)':(pc>=98?'var(--dn)':''));
         const nm=a[1].replace('台積電 ','').replace('元大 ','');
-        const cs=cPrev[k];/* 前批結轉另外標示：缺(橘)/超買(綠) */
-        const carryStr=(Math.abs(cs)>1)?'<span style="font-size:10.5px;font-weight:800;margin-left:7px;color:'+(cs<0?'var(--amb)':'var(--up)')+'">'+(cs<0?'前批缺 $'+f0(-cs):'前批超買 $'+f0(cs))+'</span>':'';
         rows2+='<div class="prow">'+
           '<span class="pnm" style="color:'+a[2]+'">'+nm+'</span>'+
           '<span class="pbar"><div style="width:'+fillW+'%;background:'+fillC+'"></div></span>'+
           '<span class="ppct"'+(col?' style="color:'+col+'"':'')+'>'+pc.toFixed(0)+'%'+(over?' 超買':(short?' 缺':(pc>=98?' 達標':'')))+'</span>'+
-          '<span class="pamt">$'+f0(prog)+' / $'+f0(tgtT)+carryStr+'</span></div>';
+          '<span class="pamt">$'+f0(prog)+' / $'+f0(tgtT)+'</span></div>';
       });
       rows2+='<div class="prow" style="border-top:1px dashed var(--line);padding-top:7px;margin-top:8px">'+
         '<span class="pnm">合計</span>'+
@@ -740,7 +736,7 @@ function recalcPlan(){
       const netPrev=ASSETS.reduce((s,a)=>s+cPrev[a[0]],0);
       if(i>0&&Math.abs(netPrev)>1){
         const remainAll=fund-ASSETS.reduce((s,a)=>{let b=0;PLAN_DEF.forEach((p,j)=>b+=batchAct[j][a[0]]);return s+b;},0);
-        note='本批照 75/25 配置（目標 $'+f0(stdBatch)+'）。第1批'+(netPrev<0?'淨缺 $'+f0(-netPrev):'淨超買 $'+f0(netPrev))+'（各檔已於右側標示）→ 計入後最終實際還要買 ≈ <b>$'+f0(remainAll)+'</b>。';
+        note='本批照 75/25 配置（目標 $'+f0(stdBatch)+'）。第1批的缺口/超買已折入上方各檔進度條（超買＝預填、缺口＝負進度，買入會先吃掉）→ 計入後最終實際還要買 ≈ <b>$'+f0(remainAll)+'</b>。';
       }
       viz.innerHTML='<div style="margin:10px 0 2px">'+rows2+(note?'<div class="note" style="border:none;padding:5px 0 0;font-size:11px">'+note+'</div>':'')+'</div>';
     }
