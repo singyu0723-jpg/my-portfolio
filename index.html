@@ -999,6 +999,8 @@ async function yhist(sym){
   }
   return null;
 }
+try{window.PNLRANGE=localStorage.getItem('erick_pnlrange')||'1m';}catch(e){window.PNLRANGE='1m';}
+function setPnlRange(r){window.PNLRANGE=r;try{localStorage.setItem('erick_pnlrange',r);}catch(e){}renderPnlChart();}
 function renderPnlChart(){
   const box=document.getElementById('pnlchart');if(!box)return;
   const fx=gv('fx')||32;
@@ -1018,12 +1020,17 @@ function renderPnlChart(){
       if(sh>0){let px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0){v+=px*sh*(it.us?fx:1);has=true;}}});
     cost.push(c);val.push(has?v:null);});
   const W=720,H=240,PL=58,PR=14,PT=16,PB=26;
-  /* X 軸：只顯示當月；Y 軸：固定 0~300萬（資料超過才自動上調） */
-  const mStart=new Date(today.slice(0,7)+'-01T00:00:00'),mEnd=new Date(today.slice(0,7)+'-01T00:00:00');mEnd.setMonth(mEnd.getMonth()+1);
-  const SPAN=mEnd-mStart,mStartStr=today.slice(0,7)+'-01';
+  /* X 軸：滾動視窗（最近10交易日 / 最近一個月），由 window.PNLRANGE 決定；Y 軸自動縮放到視窗內資料 */
+  const RANGE=window.PNLRANGE||'1m';
+  const endD=new Date(today+'T00:00:00');const mEnd=new Date(endD.getTime());mEnd.setDate(mEnd.getDate()+1);
+  let mStart=new Date(endD.getTime());
+  if(RANGE==='10d'){let cnt=0;while(cnt<10){mStart.setDate(mStart.getDate()-1);const wd=mStart.getDay();if(wd!==0&&wd!==6)cnt++;}}
+  else mStart.setMonth(mStart.getMonth()-1);
+  const SPAN=mEnd-mStart,mStartStr=dstr(mStart);
   const xOf=ds=>{const t=new Date(ds+'T00:00:00')-mStart;return PL+Math.max(0,Math.min(1,t/SPAN))*(W-PL-PR);};
   /* Y 軸自動縮放到資料範圍（不從 0 起跳，才看得出成本/市值的小幅變化） */
-  const fin=cost.concat(val).filter(x=>x!=null&&isFinite(x)&&x>0);
+  let fin=[];days.forEach((ds,i)=>{const inw=ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd;if(!inw)return;if(isFinite(cost[i])&&cost[i]>0)fin.push(cost[i]);if(val[i]!=null&&isFinite(val[i])&&val[i]>0)fin.push(val[i]);});
+  if(!fin.length)fin=cost.concat(val).filter(x=>x!=null&&isFinite(x)&&x>0);
   let lo=fin.length?Math.min.apply(null,fin):0,hi=fin.length?Math.max.apply(null,fin):1;
   let span=hi-lo;if(!(span>0))span=hi*0.1||1000;
   let step=Math.pow(10,Math.floor(Math.log10(span/4)));{const m=span/4/step;step*=m>=5?5:m>=2?2:1;}
@@ -1033,13 +1040,14 @@ function renderPnlChart(){
   const pathAll=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
   const pathSkip=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(v!=null&&isFinite(v)){s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;}else on=false;});return s.trim();};
   let grid='';for(let vv=YMIN;vv<=YMAX+0.5;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
-  let xticks='';const dim=new Date(mEnd.getTime()-1).getDate();[1,5,10,15,20,25,dim].forEach(dd=>{if(dd>dim)return;const dt=new Date(mStart);dt.setDate(dd);const xx=PL+((dt-mStart)/SPAN)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(mStart.getMonth()+1)+'/'+dd+'</text>';});
+  let xticks='';const nT=6;for(let t=0;t<=nT;t++){const dt=new Date(mStart.getTime()+SPAN*t/nT);const xx=PL+(t/nT)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</text>';}
   let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
   let vLast=null;for(let i=val.length-1;i>=0;i--){if(val[i]!=null){vLast=val[i];break;}}
   const cNow=cost[cost.length-1],vline=(vLast!=null&&vLast>=cNow)?'#c0392b':'#0d9488';
   const valPath=pathSkip(val);
   window.PNLI={days:days,cost:cost,val:val,xs:days.map(xOf),ycost:cost.map(Y),yval:val.map(v=>v!=null?Y(v):null),W:W};
-  box.innerHTML='<div class="barlbl" style="margin-top:20px">損益走勢</div>'+
+  const rbtn=(r,lbl)=>'<button onclick="setPnlRange(\''+r+'\')" style="font-size:12px;font-weight:700;padding:3px 11px;margin-left:6px;border-radius:14px;cursor:pointer;border:1px solid '+(RANGE===r?'var(--accent)':'var(--line)')+';background:'+(RANGE===r?'var(--accent)':'transparent')+';color:'+(RANGE===r?'#fff':'var(--mut)')+'">'+lbl+'</button>';
+  box.innerHTML='<div class="barlbl" style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>損益走勢</span><span>'+rbtn('10d','最近10日')+rbtn('1m','最近一個月')+'</span></div>'+
     '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px" onpointermove="pnlHover(event)" onpointerdown="pnlHover(event)" onpointerleave="pnlLeave()">'+
       grid+xticks+marks+
       '<path d="'+pathAll(cost)+'" fill="none" stroke="#bd8420" stroke-width="2" stroke-dasharray="6 4"/>'+
