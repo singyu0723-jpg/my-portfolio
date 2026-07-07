@@ -314,8 +314,7 @@ th,td{padding:6px 4px;font-size:12px}
   <table class="schtbl">
     <thead><tr><th>批次</th><th>日期</th><th>比例</th><th>說明</th></tr></thead>
     <tbody>
-      <tr><td class="c">第 1 批<br>（前三批合併）</td><td class="c">2026/6/12<br>起</td><td class="c">75%</td><td>已建倉：原 6/12、6/22、6/29 三批合併為一筆（賣光美股後改複委託買回，解遺產稅）</td></tr>
-      <tr><td class="c">第 2 批<br>（待買）</td><td class="c">2026/7/6</td><td class="c">25%</td><td>最後一批，補齊至目標配置、完成建倉</td></tr>
+      <tr><td class="c">整合建倉</td><td class="c">2026/6/12 起</td><td class="c">100%</td><td>不再分批：賣舊買新（解遺產稅）＋ 7/6-7/7 加碼，累積至目標配置</td></tr>
     </tbody>
   </table>
   <div class="note">機械式：到點開盤就買、不擇時、拉開時間攤平成本。唯一例外：組合自第 1 批成本 −10% → 立即提前執行下一批，後續日期不變。</div>
@@ -583,34 +582,32 @@ function resetAlloc(){
   ASSETS.forEach(a=>{A[a[0]]=a[4];const s=document.getElementById('r_'+a[0]);if(s)s.value=a[4];});
   recalcAlloc();
 }
-/* ───────── ② 分批進場：2 批（前三批合併 75% + 待買 25%），2026/6/26 賣光重買後改 ───────── */
+/* ───────── ② 進場：整合為單一批（2026/7/7 起不再分批），累積至目標配置 ───────── */
 const PLAN_DEF=[
-  {d:'2026-06-12',pct:75,name:'前三批合併',note:'已建倉（原 6/12+6/22+6/29 三批合併）'},
-  {d:'2026-07-06',pct:25,name:'待買',note:'最後一批，補齊至目標配置、完成建倉'}];
+  {d:'2026-06-12',pct:100,name:'整合建倉',note:'不再分批：賣舊買新＋7/6-7/7 加碼，累積至目標配置'}];
 const LSKEY='erick_plan_2026_v3';
 let S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:true};
 /* 4批6週 → 4批4週 遷移：把舊日程(7/6,7/20)自動換成新日程(6/29,7/6)，不動已客製的日期 */
 function migrateDates(){if(S.dates&&S.dates[2]==='2026-07-06'&&S.dates[3]==='2026-07-20'){S.dates[2]='2026-06-29';S.dates[3]='2026-07-06';return true;}return false;}
-/* 2026-06-26 賣光美股重買(複委託，解遺產稅)＋改 2 批結構：舊 4 批 DCA 記錄歸零。
-   目前實際持倉全部放進第 1 批（前三批合併 75%），第 2 批（待買 25%）留空。日程改 2 批。
-   一次性，rebuy0626v3 旗標防重跑（v3＝2 批版＋均價取小數兩位，蓋掉先前版本）。 */
+/* 2026-07-07 整合為單一批：含 7/6-7/7 加碼(QQQ+8、VOO+6、0050+390零、2330+24零)後的合併持倉。
+   全部放進單一批（100%），均價取小數兩位（真實均價；已實現虧損由 RLOSS 另存精確值）。
+   一次性，rebuy0626v4 旗標防重跑（v4＝單一批＋7/6-7/7 加碼，蓋先前 2 批版）。 */
 function migrateRebuy(){
-  if(S.rebuy0626v3)return false;
-  /* 均價取小數兩位（真實重買均價；已實現虧損由 RLOSS 另存精確值，損益不受影響） */
+  if(S.rebuy0626v4)return false;
   S.fills={
-    '0_qqq':{p:709.88,s:12},
-    '0_voo':{p:675.09,s:11},
+    '0_qqq':{p:715.43,s:20},
+    '0_voo':{p:680.04,s:17},
     '0_googl':{p:342.86,s:25},
-    '0_t2330':{p:2406.60,s:70},
-    '0_t0050':{p:106.99,s:1017}
+    '0_t2330':{p:2419.84,s:94},
+    '0_t0050':{p:106.80,s:1407}
   };
-  S.dates=['2026-06-12','2026-07-06'];
-  S.open=[false,false];
-  S.rebuy0626v3=true;
+  S.dates=['2026-06-12'];
+  S.open=[false];
+  S.rebuy0626v4=true;
   return true;
 }
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v3)S.rebuy0626v3=sv.rebuy0626v3;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v4)S.rebuy0626v4=sv.rebuy0626v4;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
@@ -645,7 +642,7 @@ function buildPlan(){
         '<td class="n" id="fv_'+i+'_'+k+'">—</td>'+
         '<td class="n b" id="fa_'+i+'_'+k+'">—</td></tr>';
     });
-    d.innerHTML='<div class="bkhd"><span class="bn">第 '+(i+1)+' 批 · '+(p.pct||0)+'%'+(p.name?'（'+p.name+'）':'')+'</span>'+
+    d.innerHTML='<div class="bkhd"><span class="bn">'+(PLAN_DEF.length===1?((p.name||'建倉')+' · '+(p.pct||100)+'%'):('第 '+(i+1)+' 批 · '+(p.pct||0)+'%'+(p.name?'（'+p.name+'）':'')))+'</span>'+
       '<span class="bkf">日期 <input type="date" data-pi="'+i+'" value="'+S.dates[i]+'"></span>'+
       '<span class="zone" id="bz_'+i+'"></span>'+
       '<button class="btn ghost" style="margin-left:auto;flex:0 0 auto" id="tg_'+i+'" onclick="togglePlan('+i+')">'+(S.open[i]?'▲ 收合':'▼ 展開填買入')+'</button>'+
@@ -1189,7 +1186,7 @@ function fbApplyRemote(d){
   try{
     if(d.dates)S.dates=d.dates;
     _mig=migrateDates();
-    S.rebuy0626v3=d.rebuy0626v3;/* 旗標以雲端為準：雲端還沒做過 v3 遷移時，下面就會把舊 fills/日程覆寫成現有持倉(2位均價)並回寫 */
+    S.rebuy0626v4=d.rebuy0626v4;/* 旗標以雲端為準：雲端還沒做過 v4 遷移時，下面就會把舊 fills/日程覆寫成單一批合併持倉並回寫 */
     if(d.fills)S.fills=d.fills;
     if(migrateRebuy())_mig=true;
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
@@ -1206,7 +1203,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v3:S.rebuy0626v3||false,t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v4:S.rebuy0626v4||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
