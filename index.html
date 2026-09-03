@@ -879,13 +879,20 @@ function recalcMkt(){
   });
   recalcHold();
 }
-const PROXIES=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=','https://api.codetabs.com/v1/proxy/?quest='];
+/* 2026-09-03 修：corsproxy.io 改收費(401)、allorigins/codetabs 逾時，全數失效 → 改以 r.jina.ai 為主要代理。
+   jina 要吃未編碼的原始網址，並加 x-respond-with:text 才回乾淨 JSON(否則包成 markdown)。舊代理留作備援。 */
+const JINA='https://r.jina.ai/';
+function pxfetch(px,url,signal){
+  if(px===JINA)return fetch(px+url,{signal:signal,headers:{'x-respond-with':'text'}});
+  return fetch(px+encodeURIComponent(url),{signal:signal});
+}
+const PROXIES=[JINA,'https://api.allorigins.win/raw?url=','https://api.codetabs.com/v1/proxy/?quest='];
 async function yget(sym){
   /* includePrePost=true → 取得盤後/盤前價，美股夜盤跌看得到；marketState 判斷現在是哪個時段 */
   const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=1mo&interval=1d&includePrePost=true';
   for(const px of PROXIES){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
-      const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
+      const res=await pxfetch(px,url,ctrl.signal);clearTimeout(to);
       const j=await res.json();const r=j&&j.chart&&j.chart.result&&j.chart.result[0];if(!r)continue;
       const m=r.meta||{};let price=m.regularMarketPrice;let sess='';
       const post=parseFloat(m.postMarketPrice),pre=parseFloat(m.preMarketPrice),ms=m.marketState;
@@ -911,13 +918,13 @@ function misPrice(o){
 }
 /* 台股證交所 MIS 準即時報價（盤中每幾秒更新，遠優於 Yahoo 20 分延遲）。多檔一次抓，沒開 CORS 故走代理。
    代理順序：codetabs / corsproxy 優先（較不快取），易快取的 allorigins 殿後，避免拿到舊快照。 */
-const MISPROX=['https://api.codetabs.com/v1/proxy/?quest=','https://corsproxy.io/?url=','https://api.allorigins.win/raw?url='];
+const MISPROX=[JINA,'https://api.codetabs.com/v1/proxy/?quest=','https://api.allorigins.win/raw?url='];
 async function twMis(codes){
   const ch=codes.map(c=>'tse_'+c+'.tw').join('|');
   const url='https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='+encodeURIComponent(ch)+'&json=1&delay=0&_='+Date.now();
   for(const px of MISPROX){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
-      const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
+      const res=await pxfetch(px,url,ctrl.signal);clearTimeout(to);
       const j=await res.json();const arr=j&&j.msgArray;if(!arr||!arr.length)continue;
       const out={};window.TWDBG={};arr.forEach(o=>{const price=misPrice(o);
         window.TWDBG[o.c]={z:o.z,bid:(o.b||'').split('_')[0],ask:(o.a||'').split('_')[0],y:o.y,用:price,時間:o.tlong?new Date(+o.tlong).toLocaleTimeString('zh-TW'):o.t};
@@ -987,7 +994,7 @@ async function yhist(sym){
   const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=3mo&interval=1d';
   for(const px of PROXIES){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
-      const res=await fetch(px+encodeURIComponent(url),{signal:ctrl.signal});clearTimeout(to);
+      const res=await pxfetch(px,url,ctrl.signal);clearTimeout(to);
       const j=await res.json();const r=j&&j.chart&&j.chart.result&&j.chart.result[0];if(!r)continue;
       const ts=r.timestamp||[];const cl=(r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close)||[];
       const map={};for(let i=0;i<ts.length;i++){if(cl[i]!=null)map[dstr(new Date(ts[i]*1000))]=cl[i];}
