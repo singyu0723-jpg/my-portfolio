@@ -42,10 +42,10 @@ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-ser
 .brow .bbar{flex:1;height:16px;border-radius:8px;background:var(--line);position:relative;min-width:60px}
 .brow .btgt{position:absolute;left:0;top:0;bottom:0;border-radius:8px;opacity:.26}
 .brow .bfill{position:absolute;left:0;top:3px;bottom:3px;border-radius:5px;box-shadow:0 0 0 1px rgba(255,255,255,.6) inset}
-.brow .bval{flex:0 0 110px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15}.brow .bval b{font-size:15px}.brow .bval small{display:block;font-size:10.5px;color:var(--mut);font-weight:700}
-.brow .bdev{flex:0 0 66px;text-align:right;font-weight:800;font-size:13px;white-space:nowrap}
+.brow .bval{flex:0 0 86px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15}.brow .bval b{font-size:15px}.brow .bval small{display:block;font-size:10.5px;color:var(--mut);font-weight:700}
+.brow .bdev{flex:0 0 72px;text-align:right;font-weight:700;font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .bsep{border-top:1px dashed var(--line);margin:10px 0 6px}
-@media(max-width:680px){.brow{gap:8px}.brow .bnm{width:78px;font-size:12px}.brow .bval{flex-basis:84px}.brow .bval b{font-size:13.5px}.brow .bdev{flex-basis:52px;font-size:12px}}
+@media(max-width:680px){.brow{gap:8px}.brow .bnm{width:78px;font-size:12px}.brow .bval{flex-basis:66px}.brow .bval b{font-size:13.5px}.brow .bdev{flex-basis:58px;font-size:11px}}
 .slide h2{margin:0 0 12px}
 .resetbtn{position:absolute;top:18px;right:18px;background:transparent;border:1px solid var(--line);color:var(--mut);font-size:12px;font-weight:800;padding:5px 11px;border-radius:8px;cursor:pointer}
 .resetbtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -309,7 +309,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div id="pnlbox"></div>
   <div id="pnlchart"></div>
   <div class="twrap" style="margin-top:24px"><table class="ctr">
-    <tr><th style="width:21%">標的</th><th style="width:11%">持有</th><th style="width:18%">成本均價<div class="sub">成本總額</div></th><th style="width:18%">現價<div class="sub">市值總額</div></th><th style="width:17%">損益<div class="sub">報酬率</div></th><th style="width:15%">部位完成率</th></tr>
+    <tr><th style="width:24%">標的</th><th style="width:14%">持有<div class="sub">滑入看完成率</div></th><th style="width:19%">成本均價<div class="sub">成本總額</div></th><th style="width:19%">現價<div class="sub">市值總額</div></th><th style="width:24%">損益 / 報酬率</th></tr>
     <tbody id="holdbody"></tbody>
   </table></div>
 </section>
@@ -541,11 +541,11 @@ function renderActual(H,fund){
   const scale=Math.max(40,Math.max.apply(null,rowsD.map(r=>Math.max(r.tp,r.ap))))*1.12;
   const bullet=(nm,c,ap,tp,sc,sub)=>{const dev=ap-tp,big=Math.abs(dev)>=5;return '<div class="brow"><span class="bnm">'+(c?'<span class="dot" style="background:'+c+'"></span>':'')+nm+'</span>'+
     '<span class="bbar"><div class="btgt" style="width:'+Math.min(100,tp/sc*100).toFixed(2)+'%;background:'+(c||'var(--accent)')+'"></div><div class="bfill" style="width:'+Math.min(100,ap/sc*100).toFixed(2)+'%;background:'+(c||'var(--accent)')+'"></div></span>'+
-    '<span class="bval"><b>'+ap.toFixed(1)+'%</b><small>'+sub+'</small></span>'+
-    '<span class="bdev '+(big?'amb':'mut')+'">'+(dev>=0?'+':'−')+Math.abs(dev).toFixed(1)+'pp</span></div>';};
-  let h='';rowsD.forEach(r=>{h+=bullet(r.nm.replace('台積電 ','').replace('元大 ',''),r.c,r.ap,r.tp,scale,'目標 '+(+r.tp.toFixed(0))+'% · $'+fmtW(r.cv));});
+    '<span class="bval"><b'+(big?' class="amb"':'')+'>'+ap.toFixed(1)+'%</b><small>目標 '+(+tp.toFixed(0))+'%</small></span>'+
+    '<span class="bdev mut">'+sub+'</span></div>';};
+  let h='';rowsD.forEach(r=>{h+=bullet(r.nm.replace('台積電 ','').replace('元大 ',''),r.c,r.ap,r.tp,scale,'$'+fmtW(r.cv));});
   const us=['qqq','voo','googl'].reduce((s,k)=>s+(H[k].cv||0),0),tw=vt-us,usT=(A.qqq+A.voo+A.googl)/hold*100,twT=(A.t2330+A.t0050)/hold*100;
-  h+='<div class="bsep"></div>'+bullet('美股','#0d9488',us/vt*100,usT,100,'目標 '+(+usT.toFixed(0))+'% · $'+fmtW(us))+bullet('台股','#bd8420',tw/vt*100,twT,100,'目標 '+(+twT.toFixed(0))+'% · $'+fmtW(tw));
+  h+='<div class="bsep"></div>'+bullet('美股','#0d9488',us/vt*100,usT,100,'$'+fmtW(us))+bullet('台股','#bd8420',tw/vt*100,twT,100,'$'+fmtW(tw));
   br.innerHTML=h;
   if(ds)ds.innerHTML=(maxDev>=5?'<span class="amb">⚠ 最大偏離 '+maxDev.toFixed(1)+'pp（'+maxK+'）</span>':'<span class="dn">✓ 各檔偏離 <5pp</span>')+'　市值合計 $'+f0(vt);
   let rows='';
@@ -811,12 +811,11 @@ function buildHold(){
       '<td id="sh_'+k+'">—</td>'+
       '<td id="avg_'+k+'">—</td>'+
       '<td id="cur_'+k+'">—</td>'+
-      '<td class="b" id="pld_'+k+'">—</td>'+
-      '<td class="b" id="ach_'+k+'">—</td>';
+      '<td class="b" id="pld_'+k+'">—</td>';
     tb.appendChild(tr);
   });
   const tt=document.createElement('tr');tt.className='tot';
-  tt.innerHTML='<td class="b">合計<div class="sub" id="gt_tot"></div></td><td id="sh_tot"></td><td id="avg_tot">—</td><td id="cur_tot">—</td><td class="b" id="pld_tot">—</td><td class="b" id="ach_tot">—</td>';
+  tt.innerHTML='<td class="b">合計<div class="sub" id="gt_tot"></div></td><td id="sh_tot"></td><td id="avg_tot">—</td><td id="cur_tot">—</td><td class="b" id="pld_tot">—</td>';
   tb.appendChild(tt);
 }
 function recalcHold(){
@@ -837,7 +836,7 @@ function recalcHold(){
     const cv=(isFinite(cur)&&cur>0&&sh>0)?cur*sh*mult:0;
     H[k]={sh:sh,cv:cv,inv:inv,adjInv:adjInv};
     const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='目標 '+(+A[k].toFixed(0))+'% <span id="gta_'+k+'"></span>';
-    const she=document.getElementById('sh_'+k);if(she)she.innerHTML=sh>0?'<b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股':'—';
+    const she=document.getElementById('sh_'+k);if(she){const achS=tgt>0?inv/tgt*100:0;she.innerHTML=sh>0?'<span class="tip" tabindex="0" data-tip="部位完成率 '+achS.toFixed(0)+'%'+(achS>=102?'（超買）':'')+' · 已投入 $'+f0(inv)+' / 目標 $'+f0(tgt)+'"><b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股</span>':'—';}
     const ave=document.getElementById('avg_'+k);
     if(ave){if(adjAvg==null)ave.textContent='—';
       else if(rl>0){const tip='重買均價 '+(+avg.toFixed(2)).toLocaleString()+(us?' US$':'')+' ＋ 已實現虧損 '+(us?'US$':'NT$')+(+rl.toFixed(2)).toLocaleString()+' ÷ '+(+sh.toFixed(2))+' 股 ＝ 調整後 '+(+adjAvg.toFixed(2)).toLocaleString();
@@ -846,7 +845,7 @@ function recalcHold(){
       if(adjAvg!=null)ave.innerHTML+='<div class="sub">成本 $'+fmtW(adjInv)+'</div>';}
     const cue=document.getElementById('cur_'+k);if(cue){const ss=curSess(k);cue.innerHTML=(isFinite(cur)&&cur>0)?((+cur.toFixed(2)).toLocaleString()+(ss?' <span class="mut" style="font-size:10px;font-weight:700">'+ss+'</span>':'')+(cv>0?'<div class="sub">市值 $'+fmtW(cv)+'</div>':'')):'<span class="mut">抓取中</span>';}
     const pde=document.getElementById('pld_'+k);
-    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-adjInv,plp=(cur/adjAvg-1)*100;pde.innerHTML=(pld>=0?'+':'−')+'$'+f0(Math.abs(pld))+'<div class="sub" style="color:inherit;opacity:.85">'+(plp>=0?'+':'−')+Math.abs(plp).toFixed(1)+'%</div>';pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
+    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-adjInv,plp=(cur/adjAvg-1)*100;pde.innerHTML=(pld>=0?'+':'−')+'$'+f0(Math.abs(pld))+'<span class="sub" style="display:inline;margin-left:7px;color:inherit;opacity:.8;font-size:12px">'+(plp>=0?'+':'−')+Math.abs(plp).toFixed(1)+'%</span>';pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
     const pe=document.getElementById('pl_'+k);
     if(pe){if(adjAvg>0&&isFinite(cur)&&cur>0){const pl=(cur/adjAvg-1)*100;
       pe.textContent=(pl>=0?'+':'−')+Math.abs(pl).toFixed(1)+'%';pe.className='n b '+(pl>=0?'up':'dn');}
@@ -865,7 +864,8 @@ function recalcHold(){
     if(t('avg_tot'))t('avg_tot').innerHTML=adjCost>0?'<b>$'+f0(adjCost)+'</b><div class="sub">成本合計'+(rlossTot>0?'＊':'')+'</div>':'—';
     if(t('gt_tot'))t('gt_tot').textContent=val>0?'市值 '+fmtW(val)+' / 成本 '+fmtW(adjCost):'';
     const pnlT=val-adjCost,plcT=pnlT>=0?'up':'dn';
-    if(t('pld_tot')){t('pld_tot').innerHTML=(val>0&&adjCost>0)?(pnlT>=0?'+':'−')+'$'+f0(Math.abs(pnlT))+'<div class="sub" style="color:inherit;opacity:.85">'+(pnlT>=0?'+':'−')+Math.abs(pnlT/adjCost*100).toFixed(1)+'%</div>':'—';t('pld_tot').className='b '+plcT;}
+    if(t('pld_tot')){t('pld_tot').innerHTML=(val>0&&adjCost>0)?(pnlT>=0?'+':'−')+'$'+f0(Math.abs(pnlT))+'<span class="sub" style="display:inline;margin-left:7px;color:inherit;opacity:.8;font-size:12px">'+(pnlT>=0?'+':'−')+Math.abs(pnlT/adjCost*100).toFixed(1)+'%</span>':'—';t('pld_tot').className='b '+plcT;}
+    if(t('sh_tot')){const ac=fund>0?cost/fund*100:0;t('sh_tot').innerHTML=cost>0?'<span class="tip" tabindex="0" data-tip="已投入 $'+f0(cost)+' / 總目標 $'+f0(fund)+'"><b class="'+(ac>=102?'up':(ac>=98?'dn':''))+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</b><div class="sub">部位完成率</div></span>':'';}
     if(t('ach_tot')){const ac=fund>0?cost/fund*100:0;t('ach_tot').innerHTML='<span class="tip'+(ac>=102?' up':(ac>=98?' dn':''))+'" tabindex="0" data-tip="已投入 $'+f0(cost)+' ／ 總目標 $'+f0(fund)+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</span>';}}
   renderActual(H,fund);
   if(typeof renderPnlChart==='function')renderPnlChart();
@@ -1050,7 +1050,7 @@ function pnlHover(e){var d=window.PNLI;if(!d)return;var svg=e.currentTarget;var 
   var tip=document.getElementById('pnltip');if(tip){var c=d.cost[bi],v=d.val[bi];var html='<b>'+d.days[bi].slice(5)+'</b>　成本 $'+f0(c);if(v!=null){var pl=v-c;html+='　市值 $'+f0(v)+'　<span style="color:'+(pl>=0?'var(--up)':'var(--dn)')+'">'+(pl>=0?'+':'−')+'$'+f0(Math.abs(pl))+'</span>';}tip.innerHTML=html;tip.style.opacity='1';var cont=tip.parentNode.getBoundingClientRect();tip.style.left=((r.left-cont.left)+x/d.W*r.width)+'px';tip.style.top=(e.clientY-cont.top-12)+'px';}}
 function pnlLeave(){['pnlvx','pnldotc','pnldotv'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});var t=document.getElementById('pnltip');if(t)t.style.opacity='0';}
 async function yhist(sym){
-  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=3mo&interval=1d';
+  const url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?range=1y&interval=1d';/* 1y 才涵蓋 6/12 建倉以來的「全部」區間 */
   for(const px of PROXIES){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),8000);
       const res=await pxfetch(px,url,ctrl.signal);clearTimeout(to);
@@ -1088,6 +1088,7 @@ function renderPnlChart(){
   const endD=new Date(today+'T00:00:00');const mEnd=new Date(endD.getTime());mEnd.setDate(mEnd.getDate()+1);
   let mStart=new Date(endD.getTime());
   if(RANGE==='10d'){let cnt=0;while(cnt<10){mStart.setDate(mStart.getDate()-1);const wd=mStart.getDay();if(wd!==0&&wd!==6)cnt++;}}
+  else if(RANGE==='all'){mStart=new Date(firstD+'T00:00:00');mStart.setDate(mStart.getDate()-1);}/* 全部：從第一批建倉日起 */
   else mStart.setMonth(mStart.getMonth()-1);
   const SPAN=mEnd-mStart,mStartStr=dstr(mStart);
   const xOf=ds=>{const t=new Date(ds+'T00:00:00')-mStart;return PL+Math.max(0,Math.min(1,t/SPAN))*(W-PL-PR);};
@@ -1113,7 +1114,7 @@ function renderPnlChart(){
   const valPath=pathSkip(val);
   {const wi=days.map((d,i)=>i).filter(inW);window.PNLI={days:wi.map(i=>days[i]),cost:wi.map(i=>cost[i]),val:wi.map(i=>val[i]),xs:wi.map(i=>xOf(days[i])),ycost:wi.map(i=>Y(cost[i])),yval:wi.map(i=>val[i]!=null?Y(val[i]):null),W:W};}
   const rbtn=(r,lbl)=>'<button onclick="setPnlRange(\''+r+'\')" style="font-size:12px;font-weight:700;padding:3px 11px;margin-left:6px;border-radius:14px;cursor:pointer;border:1px solid '+(RANGE===r?'var(--accent)':'var(--line)')+';background:'+(RANGE===r?'var(--accent)':'transparent')+';color:'+(RANGE===r?'#fff':'var(--mut)')+'">'+lbl+'</button>';
-  box.innerHTML='<div class="barlbl" style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>損益走勢</span><span>'+rbtn('10d','最近10日')+rbtn('1m','最近一個月')+'</span></div>'+
+  box.innerHTML='<div class="barlbl" style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>損益走勢</span><span>'+rbtn('10d','最近10日')+rbtn('1m','最近一個月')+rbtn('all','全部')+'</span></div>'+
     '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px" onpointermove="pnlHover(event)" onpointerdown="pnlHover(event)" onpointerleave="pnlLeave()">'+
       grid+xticks+marks+
       '<path d="'+pathAll(cost)+'" fill="none" stroke="#bd8420" stroke-width="2" stroke-dasharray="6 4"/>'+
@@ -1131,7 +1132,7 @@ async function buildPnlChart(){
   const box=document.getElementById('pnlchart');if(!box||pnlBusy)return;
   const need=[];
   ASSETS.forEach(a=>{const k=a[0];let sh=0;PLAN_DEF.forEach((p,i)=>{const f=getFill(i,k);if(f.p>0&&f.s>0)sh+=f.s;});
-    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(!m||!m[1])return;const h=HIST[m[1]];const last=h?Object.keys(h).sort().pop():'';const stale=!h||last<dstr(new Date(Date.now()-4*864e5));/* 快取超過4天沒新收盤 → 重抓，否則走勢圖會變一條水平線 */if(stale)need.push(m[1]);}});
+    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(!m||!m[1])return;const h=HIST[m[1]];const hk=h?Object.keys(h).sort():[];const last=hk.length?hk[hk.length-1]:'';const first=hk.length?hk[0]:'';const stale=!h||last<dstr(new Date(Date.now()-4*864e5))||(S.dates[0]&&first>S.dates[0]);/* 舊快取只有 3 個月 → 不夠畫「全部」也重抓 *//* 快取超過4天沒新收盤 → 重抓，否則走勢圖會變一條水平線 */if(stale)need.push(m[1]);}});
   if(!need.length)return;
   pnlBusy=true;
   try{await Promise.all(need.map(async sym=>{const h=await yhist(sym);if(h)HIST[sym]=h;}));
