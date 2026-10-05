@@ -40,8 +40,8 @@ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-ser
 .brow .bnm{width:104px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .brow .bnm .dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
 .brow .bbar{flex:1;height:16px;border-radius:8px;background:var(--line);position:relative;min-width:60px}
-.brow .bfill{position:absolute;left:0;top:0;bottom:0;border-radius:8px}
-.brow .btick{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}
+.brow .btgt{position:absolute;left:0;top:0;bottom:0;border-radius:8px;opacity:.26}
+.brow .bfill{position:absolute;left:0;top:3px;bottom:3px;border-radius:5px;box-shadow:0 0 0 1px rgba(255,255,255,.6) inset}
 .brow .bval{flex:0 0 110px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15}.brow .bval b{font-size:15px}.brow .bval small{display:block;font-size:10.5px;color:var(--mut);font-weight:700}
 .brow .bdev{flex:0 0 66px;text-align:right;font-weight:800;font-size:13px;white-space:nowrap}
 .bsep{border-top:1px dashed var(--line);margin:10px 0 6px}
@@ -251,7 +251,7 @@ th,td{padding:6px 4px;font-size:12px}
 .sgx{display:none}
 .seg .s1{font-size:11px}.seg .s2{font-size:10px}
 .bar{height:30px}
-#allocbar{height:38px !important}
+#allocbar,#allocbar_act{height:38px !important}
 }
 </style>
 </head>
@@ -278,9 +278,10 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <h2 class="sect"><span class="num">①</span>資金與配置<button class="resetbtn sbtn" id="adjbtn" onclick="toggleAdj()">⚙ 調整目標配置</button></h2>
-  <div class="barlbl" style="margin-top:8px">目標配置</div>
+  <div class="barlbl" style="margin-top:8px">配置總覽<span class="blsub">上：目標　下：實際（依市值）</span></div>
   <div class="bar" id="allocbar" style="height:50px"></div>
-  <div class="barlbl">實際 vs 目標<span class="blsub">實心＝實際（依市值）　<b style="color:var(--ink)">│</b>＝目標</span></div>
+  <div class="bar actbar" id="allocbar_act" style="height:50px"><div class="seg empty">抓價後顯示實際配置</div></div>
+  <div class="barlbl">實際 vs 目標<span class="blsub">淡色＝目標比例　實色＝實際（依市值）</span></div>
   <div id="bulletrows"><div class="note" style="border:none;padding-top:2px">抓價後顯示實際配置</div></div>
   <div class="sechd" onclick="toggleSec('dev')" style="margin-top:14px;display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--line)"><span style="font-size:13px;font-weight:800;white-space:nowrap;flex:0 0 auto">偏離明細</span><span class="blsub" id="devsum" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><span class="caret" id="ca_dev" style="font-size:15px;flex:0 0 auto">▸</span></div>
   <div class="secbody" id="sb_dev" style="display:none"><div id="devtbl"></div></div>
@@ -528,15 +529,18 @@ let ADJ=false;
 function toggleAdj(){ADJ=!ADJ;const b=document.getElementById('adjbox');if(b)b.style.display=ADJ?'':'none';const t=document.getElementById('adjbtn');if(t)t.textContent=ADJ?'✕ 收起調整':'⚙ 調整目標配置';}
 /* 實際配置（依市值）：上方 bar 第二列＋目標 vs 實際偏離表 */
 function renderActual(H,fund){
-  const br=document.getElementById('bulletrows'),dt=document.getElementById('devtbl'),ds=document.getElementById('devsum');if(!br)return;
+  const br=document.getElementById('bulletrows'),dt=document.getElementById('devtbl'),ds=document.getElementById('devsum'),ab=document.getElementById('allocbar_act');if(!br)return;
   const vt=KEYS.reduce((s,k)=>s+((H[k]&&H[k].cv)||0),0);
-  if(vt<=0){br.innerHTML='<div class="note" style="border:none;padding-top:2px">抓價後顯示實際配置</div>';if(dt)dt.innerHTML='';if(ds)ds.textContent='';return;}
+  if(vt<=0){br.innerHTML='<div class="note" style="border:none;padding-top:2px">抓價後顯示實際配置</div>';if(ab)ab.innerHTML='<div class="seg empty">抓價後顯示實際配置</div>';if(dt)dt.innerHTML='';if(ds)ds.textContent='';return;}
+  if(ab){ab.innerHTML='';ASSETS.forEach(a=>{const cv=H[a[0]].cv||0;if(cv<=0)return;const w=cv/vt*100;const d=document.createElement('div');d.className='seg';d.style.width=w+'%';d.style.background=a[2];d.style.flexDirection='column';
+    const nm=a[1].replace('台積電 ','').replace('元大 ','');
+    d.innerHTML=(w>=9?'<span class="s1"><i class="sgx">'+nm+' </i>'+w.toFixed(1)+'%</span><span class="s2">$'+f0(cv)+'</span>':'<span class="s1">'+w.toFixed(0)+'%</span>');ab.appendChild(d);});}
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
   const rowsD=[];let maxDev=0,maxK='';
   ASSETS.forEach(a=>{const k=a[0];const cv=H[k].cv||0;const tp=A[k]/hold*100,ap=cv/vt*100,dev=ap-tp;rowsD.push({k:k,nm:a[1],c:a[2],cv:cv,tp:tp,ap:ap,dev:dev,diff:cv-vt*tp/100});if(Math.abs(dev)>maxDev){maxDev=Math.abs(dev);maxK=a[1].replace('台積電 ','').replace('元大 ','');}});
   const scale=Math.max(40,Math.max.apply(null,rowsD.map(r=>Math.max(r.tp,r.ap))))*1.12;
   const bullet=(nm,c,ap,tp,sc,sub)=>{const dev=ap-tp,big=Math.abs(dev)>=5;return '<div class="brow"><span class="bnm">'+(c?'<span class="dot" style="background:'+c+'"></span>':'')+nm+'</span>'+
-    '<span class="bbar"><div class="bfill" style="width:'+Math.min(100,ap/sc*100).toFixed(2)+'%;background:'+(c||'var(--accent)')+'"></div><div class="btick" style="left:'+Math.min(100,tp/sc*100).toFixed(2)+'%"></div></span>'+
+    '<span class="bbar"><div class="btgt" style="width:'+Math.min(100,tp/sc*100).toFixed(2)+'%;background:'+(c||'var(--accent)')+'"></div><div class="bfill" style="width:'+Math.min(100,ap/sc*100).toFixed(2)+'%;background:'+(c||'var(--accent)')+'"></div></span>'+
     '<span class="bval"><b>'+ap.toFixed(1)+'%</b><small>'+sub+'</small></span>'+
     '<span class="bdev '+(big?'amb':'mut')+'">'+(dev>=0?'+':'−')+Math.abs(dev).toFixed(1)+'pp</span></div>';};
   let h='';rowsD.forEach(r=>{h+=bullet(r.nm.replace('台積電 ','').replace('元大 ',''),r.c,r.ap,r.tp,scale,'目標 '+(+r.tp.toFixed(0))+'% · $'+fmtW(r.cv));});
