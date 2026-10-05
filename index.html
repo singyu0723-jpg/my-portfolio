@@ -298,20 +298,20 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">②</span>部位建立<span class="sbtn" style="display:flex;gap:6px"><button class="resetbtn" style="position:static" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button><button class="resetbtn" style="position:static;border-color:var(--accent);color:var(--accent)" onclick="addBatch()">＋ 新增批次</button></span></h2>
-  <div id="progbox" style="margin-top:8px"></div>
-  <div id="exbox" style="margin-top:14px"></div>
-  <div id="batchwrap" style="margin-top:18px"></div>
-</section>
-
-<section class="slide">
-  <h2 class="sect"><span class="num">③</span>損益</h2>
+  <h2 class="sect"><span class="num">②</span>損益</h2>
   <div id="pnlbox"></div>
   <div id="pnlchart"></div>
   <div class="twrap" style="margin-top:24px"><table class="ctr">
-    <tr><th style="width:24%">標的</th><th style="width:14%">持有<div class="sub">滑入看完成率</div></th><th style="width:19%">成本均價<div class="sub">成本總額</div></th><th style="width:19%">現價<div class="sub">市值總額</div></th><th style="width:24%">損益 / 報酬率</th></tr>
+    <tr><th style="width:22%">標的</th><th style="width:15%">持有</th><th style="width:20%">成本</th><th style="width:20%">現值</th><th style="width:23%">損益</th></tr>
     <tbody id="holdbody"></tbody>
   </table></div>
+</section>
+
+<section class="slide">
+  <h2 class="sect"><span class="num">③</span>部位建立<span class="sbtn" style="display:flex;gap:6px"><button class="resetbtn" style="position:static" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button><button class="resetbtn" style="position:static;border-color:var(--accent);color:var(--accent)" onclick="addBatch()">＋ 新增批次</button></span></h2>
+  <div id="progbox" style="margin-top:8px"></div>
+  <div id="exbox" style="margin-top:14px"></div>
+  <div id="batchwrap" style="margin-top:18px"></div>
 </section>
 
 <section class="slide">
@@ -330,7 +330,7 @@ th,td{padding:6px 4px;font-size:12px}
   </div>
   <div class="secbody" id="sb_mkt">
   <div class="mgrid" id="mktgrid"></div>
-  <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
+  <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見③）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
   </div>
 </section>
 
@@ -807,7 +807,7 @@ function buildHold(){
   ASSETS.forEach(a=>{
     const k=a[0];const us=a[3]==='us';
     const tr=document.createElement('tr');
-    tr.innerHTML='<td class="b">'+a[1]+(us?' <span class="mut" style="font-size:11px;font-weight:600">US$</span>':'')+'<div class="sub" id="gt_'+k+'">—</div></td>'+
+    tr.innerHTML='<td class="b">'+a[1]+(us?' <span class="mut" style="font-size:11px;font-weight:600">US$</span>':'')+'</td>'+
       '<td id="sh_'+k+'">—</td>'+
       '<td id="avg_'+k+'">—</td>'+
       '<td id="cur_'+k+'">—</td>'+
@@ -815,7 +815,7 @@ function buildHold(){
     tb.appendChild(tr);
   });
   const tt=document.createElement('tr');tt.className='tot';
-  tt.innerHTML='<td class="b">合計<div class="sub" id="gt_tot"></div></td><td id="sh_tot"></td><td id="avg_tot">—</td><td id="cur_tot">—</td><td class="b" id="pld_tot">—</td>';
+  tt.innerHTML='<td class="b">合計</td><td id="sh_tot"></td><td id="avg_tot">—</td><td id="cur_tot">—</td><td class="b" id="pld_tot">—</td>';
   tb.appendChild(tt);
 }
 function recalcHold(){
