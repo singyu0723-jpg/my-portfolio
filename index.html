@@ -133,6 +133,15 @@ li.warn:before{background:var(--up)}
 .tip{position:relative;cursor:help;border-bottom:1px dotted var(--mut);outline:none}
 .tip::after{content:attr(data-tip);position:absolute;right:0;bottom:135%;background:var(--ink);color:#fffdf8;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:30}
 .tip:hover::after,.tip:focus::after,.tip:active::after{opacity:1}
+.tip.l::after{right:auto;left:0}.tip.b::after{bottom:auto;top:135%}
+@media(max-width:680px){
+  /* 手機：持倉表每格改兩行（總額／價格），五欄塞得進 402px 不用橫向捲 */
+  .deck table.ctr .cm{font-size:12.5px}.deck table.ctr .sub.il{display:block;margin:2px 0 0;font-size:10px}.deck table.ctr .pct{display:block;margin:2px 0 0;font-size:11.5px}
+  .deck table.ctr th,.deck table.ctr td{padding:7px 2px;font-size:11.5px}.deck table.ctr td:first-child{font-size:12px;white-space:normal;line-height:1.25}.deck table.ctr td:first-child .mut{display:none}
+  .deck table.ctr td .tip{border-bottom:none}
+  /* 手機：配置 bar 只顯示 %，金額看下方子彈圖 */
+  #allocbar .seg .s2,#allocbar_act .seg .s2{display:none}
+}
 table.ctr th,table.ctr td{text-align:center}
 table.ctr .cm{font-size:14.5px;font-weight:800;font-variant-numeric:tabular-nums}table.ctr .sub.il{display:inline;margin-left:7px;font-size:11.5px}table.ctr .pct{display:inline-block;margin-left:8px;font-size:13.5px;font-weight:800;color:inherit;opacity:.9;font-variant-numeric:tabular-nums}
 table.ctr th:first-child,table.ctr td:first-child{text-align:left}
@@ -837,7 +846,7 @@ function recalcHold(){
     const cv=(isFinite(cur)&&cur>0&&sh>0)?cur*sh*mult:0;
     H[k]={sh:sh,cv:cv,inv:inv,adjInv:adjInv};
     const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='目標 '+(+A[k].toFixed(0))+'% <span id="gta_'+k+'"></span>';
-    const she=document.getElementById('sh_'+k);if(she){const achS=tgt>0?inv/tgt*100:0;she.innerHTML=sh>0?'<span class="tip" tabindex="0" data-tip="部位完成率 '+achS.toFixed(0)+'%'+(achS>=102?'（超買）':'')+' · 已投入 $'+f0(inv)+' / 目標 $'+f0(tgt)+'"><b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股</span>':'—';}
+    const she=document.getElementById('sh_'+k);if(she){const achS=tgt>0?inv/tgt*100:0;she.innerHTML=sh>0?'<span class="tip l b" tabindex="0" data-tip="部位完成率 '+achS.toFixed(0)+'%'+(achS>=102?'（超買）':'')+' · 已投入 $'+f0(inv)+' / 目標 $'+f0(tgt)+'"><b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股</span>':'—';}
     const ave=document.getElementById('avg_'+k);
     if(ave){if(adjAvg==null)ave.textContent='—';
       else{let avgH;
@@ -867,7 +876,7 @@ function recalcHold(){
     if(t('gt_tot'))t('gt_tot').textContent=val>0?'市值 '+fmtW(val)+' / 成本 '+fmtW(adjCost):'';
     const pnlT=val-adjCost,plcT=pnlT>=0?'up':'dn';
     if(t('pld_tot')){t('pld_tot').innerHTML=(val>0&&adjCost>0)?'<b class="cm">'+(pnlT>=0?'+':'−')+'$'+f0(Math.abs(pnlT))+'</b><span class="pct">'+(pnlT>=0?'+':'−')+Math.abs(pnlT/adjCost*100).toFixed(1)+'%</span>':'—';t('pld_tot').className='b '+plcT;}
-    if(t('sh_tot')){const ac=fund>0?cost/fund*100:0;t('sh_tot').innerHTML=cost>0?'<span class="tip" tabindex="0" data-tip="已投入 $'+f0(cost)+' / 總目標 $'+f0(fund)+'"><b class="'+(ac>=102?'up':(ac>=98?'dn':''))+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</b></span>':'';}
+    if(t('sh_tot')){const ac=fund>0?cost/fund*100:0;t('sh_tot').innerHTML=cost>0?'<span class="tip l" tabindex="0" data-tip="已投入 $'+f0(cost)+' / 總目標 $'+f0(fund)+'"><b class="'+(ac>=102?'up':(ac>=98?'dn':''))+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</b></span>':'';}
     if(t('ach_tot')){const ac=fund>0?cost/fund*100:0;t('ach_tot').innerHTML='<span class="tip'+(ac>=102?' up':(ac>=98?' dn':''))+'" tabindex="0" data-tip="已投入 $'+f0(cost)+' ／ 總目標 $'+f0(fund)+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</span>';}}
   renderActual(H,fund);
   if(typeof renderPnlChart==='function')renderPnlChart();
