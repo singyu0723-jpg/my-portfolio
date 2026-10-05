@@ -318,10 +318,15 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">③</span>部位建立<span class="sbtn" style="display:flex;gap:6px"><button class="resetbtn" style="position:static" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button><button class="resetbtn" style="position:static;border-color:var(--accent);color:var(--accent)" onclick="addBatch()">＋ 新增批次</button></span></h2>
-  <div id="progbox" style="margin-top:8px"></div>
+  <div class="sechd" onclick="toggleSec('plan')">
+    <h2 class="sect"><span class="num">③</span>部位建立<span class="fxhd"><b id="planhd">—</b><small>建置進度</small></span><span class="caret" id="ca_plan">▸</span></h2>
+  </div>
+  <div class="secbody" id="sb_plan">
+  <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="resetbtn" style="position:static" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button><button class="resetbtn" style="position:static;border-color:var(--accent);color:var(--accent)" onclick="addBatch()">＋ 新增批次</button></div>
+  <div id="progbox" style="margin-top:2px"></div>
   <div id="exbox" style="margin-top:14px"></div>
   <div id="batchwrap" style="margin-top:18px"></div>
+  </div>
 </section>
 
 <section class="slide">
@@ -674,9 +679,9 @@ function togglePlan(i){
 }
 function toggleHide(){S.hideF=!S.hideF;save();recalcPlan();}
 /* ③④⑤ 收折（預設收起） */
-let SECS={mkt:false,fx:true,dev:false};
+let SECS={mkt:false,fx:true,dev:false,plan:false};
 try{const sv2=JSON.parse(localStorage.getItem('erick_secs_v1'));if(sv2)SECS=Object.assign(SECS,sv2);}catch(e){}
-function applySecs(){['mkt','fx','dev'].forEach(s=>{
+function applySecs(){['mkt','fx','dev','plan'].forEach(s=>{
   const b=document.getElementById('sb_'+s);if(b)b.style.display=SECS[s]?'':'none';
   const c=document.getElementById('ca_'+s);if(c)c.textContent=SECS[s]?'▾':'▸';});}
 function toggleSec(s){SECS[s]=!SECS[s];try{localStorage.setItem('erick_secs_v1',JSON.stringify(SECS));}catch(e){}applySecs();}
@@ -885,6 +890,7 @@ function recalcHold(){
   if(pb){const fund2=TF();const today=todayStr();
     let expPct=0;PLAN_DEF.forEach((p,i)=>{const b=i===0?gv('fund'):(p.budget||0);if(S.dates[i]<=today&&fund2>0)expPct+=b/fund2*100;});
     const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
+    const ph=document.getElementById('planhd');if(ph){ph.textContent=actPct.toFixed(1)+'%';ph.style.color=actPct>=102?'var(--up)':'var(--accent)';}
     let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let any=false;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)any=true;});if(!any){nextI=i;nextD=S.dates[i];break;}}
     pb.innerHTML='<div style="margin:14px 0 4px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:4px">'+
