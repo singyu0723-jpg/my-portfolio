@@ -25,6 +25,17 @@ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-ser
 .deck{max-width:920px;margin:0 auto;padding:18px 14px 60px;position:relative;z-index:2;background:var(--bg)}
 .slide{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 24px 18px;margin-bottom:12px;position:relative}
 .barlbl{font-size:14.5px;color:var(--ink);font-weight:800;margin:20px 0 8px}
+.blsub{font-size:11px;color:var(--mut);font-weight:700;margin-left:8px}
+.actbar{margin-top:-1px;height:34px;border-style:dashed}.actbar .seg{opacity:.88}
+.seg.empty{width:100%;background:var(--chip);color:var(--mut);font-size:12px;font-weight:700}
+.devt td,.devt th{text-align:right;vertical-align:top;white-space:nowrap}.devt td:first-child,.devt th:first-child{text-align:left}
+.devt .sub,table.ctr .sub{font-size:10.5px;color:var(--mut);font-weight:700;margin-top:1px;white-space:nowrap}
+.devt .dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.devt tr.tot td,table.ctr tr.tot td{border-top:2px solid var(--line);border-bottom:none;background:var(--chip)}
+.amb{color:var(--amb)}
+.bkhd .bn input.bname{width:130px;font-family:inherit;font-weight:800;font-size:14px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:#fff}
+.bkf input.bbud{width:112px}
+.bdel{margin-right:0;padding:5px 9px;color:var(--up);border-color:var(--line)}
 .slide h2{margin:0 0 12px}
 .resetbtn{position:absolute;top:18px;right:18px;background:transparent;border:1px solid var(--line);color:var(--mut);font-size:12px;font-weight:800;padding:5px 11px;border-radius:8px;cursor:pointer}
 .resetbtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -256,13 +267,19 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">①</span>資金與配置<button class="resetbtn sbtn" onclick="resetAlloc()">↺ 重設配置</button></h2>
-  <div class="barlbl" style="margin-top:8px">配置總覽</div>
+  <h2 class="sect"><span class="num">①</span>資金與配置<button class="resetbtn sbtn" id="adjbtn" onclick="toggleAdj()">⚙ 調整目標配置</button></h2>
+  <div class="barlbl" style="margin-top:8px">配置總覽<span class="blsub">上：目標　下：實際（依市值）</span></div>
   <div class="bar" id="allocbar" style="height:50px"></div>
-  <div class="barlbl">市場分布</div>
+  <div class="bar actbar" id="allocbar_act"><div class="seg empty">抓價後顯示實際配置</div></div>
+  <div class="barlbl">市場分布<span class="blsub">上：目標　下：實際</span></div>
   <div class="bar" id="groupbar"></div>
-  <div id="allocrows" style="margin-top:14px"></div>
-  <div id="sumwarn"></div>
+  <div class="bar actbar" id="groupbar_act"></div>
+  <div id="devtbl" style="margin-top:14px"></div>
+  <div id="adjbox" style="display:none;margin-top:14px;border:1px dashed var(--line);border-radius:12px;padding:4px 14px 10px">
+    <div class="barlbl" style="margin:10px 0 2px;display:flex;align-items:center;gap:10px">調整目標配置<span class="blsub">拉動後①②③的目標金額同步更新</span><button class="btn ghost" style="margin-left:auto;padding:4px 10px;margin-right:0" onclick="resetAlloc()">↺ 還原定稿</button></div>
+    <div id="allocrows"></div>
+    <div id="sumwarn"></div>
+  </div>
   <div class="kicker" style="margin-top:16px">實質曝險（穿透 0050／QQQ／VOO）</div>
   <div class="chips" style="margin-top:6px">
     <div class="chip"><div class="l">台積電 2330 實質曝險</div><div class="v" id="tsmc_exp">—</div><div class="s"><span id="tsmc_amt">—</span>　·　2330 + 0050×57%</div></div>
@@ -271,7 +288,7 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
-  <h2 class="sect"><span class="num">②</span>部位建立<button class="resetbtn sbtn" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button></h2>
+  <h2 class="sect"><span class="num">②</span>部位建立<span class="sbtn" style="display:flex;gap:6px"><button class="resetbtn" style="position:static" id="hidebtn" onclick="toggleHide()">▦ 隱藏未到期批次</button><button class="resetbtn" style="position:static;border-color:var(--accent);color:var(--accent)" onclick="addBatch()">＋ 新增批次</button></span></h2>
   <div id="progbox" style="margin-top:8px"></div>
   <div id="exbox" style="margin-top:14px"></div>
   <div id="batchwrap" style="margin-top:18px"></div>
@@ -282,7 +299,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div id="pnlbox"></div>
   <div id="pnlchart"></div>
   <div class="twrap" style="margin-top:24px"><table class="ctr">
-    <tr><th style="width:13%">標的</th><th style="width:10%">資產配置</th><th style="width:11%">持有</th><th style="width:13%">成本均價</th><th style="width:13%">現價</th><th style="width:13%">損益$</th><th style="width:11%">損益%</th><th style="width:16%">部位完成率</th></tr>
+    <tr><th style="width:13%">標的</th><th style="width:10%">目標／實際</th><th style="width:11%">持有／市值</th><th style="width:13%">成本均價／成本</th><th style="width:13%">現價</th><th style="width:13%">損益$</th><th style="width:11%">損益%</th><th style="width:16%">部位完成率</th></tr>
     <tbody id="holdbody"></tbody>
   </table></div>
 </section>
@@ -494,6 +511,37 @@ const A={};ASSETS.forEach(a=>A[a[0]]=a[4]);
    GOOGL 全平倉 賣15857.343 − 買16231.4026 = −374.0596。台股 2330/0050 未動＝0。 */
 const RLOSS={qqq:220.186,voo:118.2775,googl:374.0596,t2330:0,t0050:0};
 function gv(id){return parseFloat(document.getElementById(id).value)||0;}
+/* 總目標＝💰分頁投資總額（第 0 批）＋②新增各批預算加總 */
+function extraBudget(){let t=0;(S.batches||[]).forEach((b,i)=>{if(i>0&&b&&b.budget>0)t+=b.budget;});return t;}
+function TF(){return gv('fund')+extraBudget();}
+function fmtW(v){return Math.abs(v)>=1e4?(v/1e4).toFixed(1)+'萬':f0(v);}
+let ADJ=false;
+function toggleAdj(){ADJ=!ADJ;const b=document.getElementById('adjbox');if(b)b.style.display=ADJ?'':'none';const t=document.getElementById('adjbtn');if(t)t.textContent=ADJ?'✕ 收起調整':'⚙ 調整目標配置';}
+/* 實際配置（依市值）：上方 bar 第二列＋目標 vs 實際偏離表 */
+function renderActual(H,fund){
+  const bar=document.getElementById('allocbar_act'),gb=document.getElementById('groupbar_act'),dt=document.getElementById('devtbl');if(!bar)return;
+  const vt=KEYS.reduce((s,k)=>s+((H[k]&&H[k].cv)||0),0);
+  if(vt<=0){bar.innerHTML='<div class="seg empty">抓價後顯示實際配置</div>';if(gb)gb.innerHTML='';if(dt)dt.innerHTML='';return;}
+  bar.innerHTML='';
+  ASSETS.forEach(a=>{const cv=H[a[0]].cv||0;if(cv<=0)return;const w=cv/vt*100;const d=document.createElement('div');d.className='seg';d.style.width=w+'%';d.style.background=a[2];d.style.flexDirection='column';
+    const nm=a[1].replace('台積電 ','').replace('元大 ','');
+    d.innerHTML=(w>=9?'<span class="s1"><i class="sgx">'+nm+' </i>'+w.toFixed(1)+'%</span><span class="s2">$'+f0(cv)+'</span>':'<span class="s1">'+w.toFixed(0)+'%</span>');bar.appendChild(d);});
+  const us=['qqq','voo','googl'].reduce((s,k)=>s+(H[k].cv||0),0),tw=vt-us;
+  if(gb){gb.innerHTML='';[['美股',us,'#0d9488'],['台股',tw,'#bd8420']].forEach(g=>{if(g[1]<=0)return;const d=document.createElement('div');d.className='seg';d.style.width=(g[1]/vt*100)+'%';d.style.background=g[2];
+    d.innerHTML='<span class="s1">'+g[0]+' '+(g[1]/vt*100).toFixed(1)+'%<i class="sgx"> $'+f0(g[1])+'</i></span>';gb.appendChild(d);});}
+  const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
+  let rows='',maxDev=0;
+  ASSETS.forEach(a=>{const k=a[0];const cv=H[k].cv||0;const tp=A[k]/hold*100,ap=cv/vt*100,dev=ap-tp,diff=cv-vt*tp/100,big=Math.abs(dev)>=5;if(Math.abs(dev)>maxDev)maxDev=Math.abs(dev);
+    rows+='<tr><td><span class="dot" style="background:'+a[2]+'"></span><b>'+a[1]+'</b></td>'+
+      '<td><b>'+(+tp.toFixed(0))+'%</b><div class="sub">$'+f0(fund*tp/100)+'</div></td>'+
+      '<td><b>'+ap.toFixed(1)+'%</b><div class="sub">$'+f0(cv)+'</div></td>'+
+      '<td class="'+(big?'amb':'mut')+'"><b>'+(dev>=0?'+':'−')+Math.abs(dev).toFixed(1)+'pp</b></td>'+
+      '<td class="'+(big?'amb':'mut')+'"><b>'+(diff>=0?'+':'−')+'$'+f0(Math.abs(diff))+'</b><div class="sub">'+(diff>=0?'多於目標':'少於目標')+'</div></td></tr>';});
+  rows+='<tr class="tot"><td><b>合計</b></td><td><b>100%</b><div class="sub">$'+f0(fund)+'</div></td><td><b>100%</b><div class="sub">$'+f0(vt)+'</div></td>'+
+    '<td colspan="2" class="'+(maxDev>=5?'amb':'dn')+'" style="font-size:12px;font-weight:800">'+(maxDev>=5?'⚠ 最大偏離 '+maxDev.toFixed(1)+'pp':'✓ 各檔偏離 <5pp')+'</td></tr>';
+  if(dt)dt.innerHTML='<div class="twrap"><table class="devt"><tr><th>標的</th><th>目標</th><th>實際（市值）</th><th>偏離</th><th>金額差</th></tr>'+rows+'</table></div>'+
+    '<div class="note" style="border:none;padding-top:4px;font-size:11px">實際配置以當前市值計，隨股價每日變動；目標金額＝總目標 $'+f0(fund)+' × 目標比例。偏離 ≥5pp 以橘色提示，要不要再平衡由你決定。</div>';
+}
 function buildAlloc(){
   const wrap=document.getElementById('allocrows');wrap.innerHTML='';
   ASSETS.forEach(a=>{
@@ -506,7 +554,7 @@ function buildAlloc(){
   ASSETS.forEach(a=>{document.getElementById('r_'+a[0]).addEventListener('input',e=>{A[a[0]]=parseFloat(e.target.value)||0;recalcAlloc();});});
 }
 function recalcAlloc(){
-  const fund=gv('fund');const fx=gv('fx')||32;
+  const fund=TF();const fx=gv('fx')||32;
   const hold=KEYS.reduce((s,k)=>s+A[k],0);
   ASSETS.forEach(a=>{const pv=A[a[0]];const amt=fund*pv/100;
     document.getElementById('o_'+a[0]).innerHTML='<span class="o1"><b>'+(+pv.toFixed(0))+'%</b></span>'+
@@ -538,10 +586,30 @@ function resetAlloc(){
   recalcAlloc();
 }
 /* ───────── ② 進場：整合為單一批（2026/7/7 起不再分批），累積至目標配置 ───────── */
-const PLAN_DEF=[
-  {d:'2026-06-12',pct:100,name:'整合建倉',note:'不再分批：賣舊買新＋7/6-7/7 加碼，累積至目標配置'}];
+const PLAN_BASE={d:'2026-06-12',name:'整合建倉'};
+let PLAN_DEF=[PLAN_BASE];
 const LSKEY='erick_plan_2026_v3';
-let S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:true};
+let S={dates:[PLAN_BASE.d],open:[false],fills:{},hideF:true,batches:[{name:PLAN_BASE.name,budget:null}]};
+/* 多批次：S.batches=[{name,budget}]；第 0 批預算＝💰分頁投資總額（不可改），其餘各批自填預算，總目標＝加總 */
+function syncPlan(){
+  if(!S.batches||!S.batches.length)S.batches=[{name:PLAN_BASE.name,budget:null}];
+  if(!S.dates)S.dates=[];if(!S.open)S.open=[];
+  while(S.dates.length<S.batches.length)S.dates.push(todayStr());
+  while(S.open.length<S.batches.length)S.open.push(true);
+  PLAN_DEF=S.batches.map((b,i)=>({d:S.dates[i],name:(b&&b.name)||(i===0?PLAN_BASE.name:'第 '+(i+1)+' 批'),budget:i===0?null:((b&&b.budget)||0)}));
+}
+function addBatch(){
+  S.batches.push({name:'第 '+(S.batches.length+1)+' 批',budget:0});S.dates.push(todayStr());S.open.push(true);
+  save();syncPlan();buildPlan();recalcAlloc();
+  const el=document.getElementById('bk_'+(S.batches.length-1));if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function delBatch(i){
+  if(i<=0)return;const nm=(S.batches[i]&&S.batches[i].name)||('第 '+(i+1)+' 批');
+  if(!confirm('刪除「'+nm+'」？這批填的買入紀錄會一起刪除。'))return;
+  S.batches.splice(i,1);S.dates.splice(i,1);S.open.splice(i,1);
+  const nf={};Object.keys(S.fills).forEach(key=>{const q=key.indexOf('_');const j=+key.slice(0,q),k=key.slice(q+1);if(j===i)return;nf[(j>i?j-1:j)+'_'+k]=S.fills[key];});S.fills=nf;
+  save();syncPlan();buildPlan();recalcAlloc();
+}
 /* 4批6週 → 4批4週 遷移：把舊日程(7/6,7/20)自動換成新日程(6/29,7/6)，不動已客製的日期 */
 function migrateDates(){if(S.dates&&S.dates[2]==='2026-07-06'&&S.dates[3]==='2026-07-20'){S.dates[2]='2026-06-29';S.dates[3]='2026-07-06';return true;}return false;}
 /* 2026-07-07 整合為單一批：含 7/6-7/7 加碼(QQQ+8、VOO+6、0050+390零、2330+24零)後的合併持倉。
@@ -562,10 +630,11 @@ function migrateRebuy(){
   return true;
 }
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v4)S.rebuy0626v4=sv.rebuy0626v4;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v4)S.rebuy0626v4=sv.rebuy0626v4;if(sv.batches)S.batches=sv.batches;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
+syncPlan();
 function save(){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}if(typeof fbSave==='function')fbSave();}
 const STL={wait:['待執行','st-wait'],due:['今日應執行','st-due'],part:['部分執行','st-part'],done:['已執行','st-done']};
 function todayStr(){return new Date().toISOString().slice(0,10);}
@@ -597,10 +666,13 @@ function buildPlan(){
         '<td class="n" id="fv_'+i+'_'+k+'">—</td>'+
         '<td class="n b" id="fa_'+i+'_'+k+'">—</td></tr>';
     });
-    d.innerHTML='<div class="bkhd"><span class="bn">'+(PLAN_DEF.length===1?((p.name||'建倉')+' · '+(p.pct||100)+'%'):('第 '+(i+1)+' 批 · '+(p.pct||0)+'%'+(p.name?'（'+p.name+'）':'')))+'</span>'+
-      '<span class="bkf">日期 <input type="date" data-pi="'+i+'" value="'+S.dates[i]+'"></span>'+
+    const nameHtml=i===0?'<span class="bn">'+p.name+'</span>':'<span class="bn"><input type="text" class="bname" data-bi="'+i+'" value="'+(p.name||'').replace(/"/g,'&quot;')+'" placeholder="第 '+(i+1)+' 批"></span>';
+    const budHtml=i===0?'':'<span class="bkf">預算 $<input type="number" class="bbud" data-bi="'+i+'" value="'+(p.budget||'')+'" step="10000" min="0" placeholder="金額"></span>';
+    d.innerHTML='<div class="bkhd">'+nameHtml+
+      '<span class="bkf">日期 <input type="date" data-pi="'+i+'" value="'+S.dates[i]+'"></span>'+budHtml+
       '<span class="zone" id="bz_'+i+'"></span>'+
       '<button class="btn ghost" style="margin-left:auto;flex:0 0 auto" id="tg_'+i+'" onclick="togglePlan('+i+')">'+(S.open[i]?'▲ 收合':'▼ 展開填買入')+'</button>'+
+      (i>0?'<button class="btn ghost bdel" title="刪除此批" onclick="delBatch('+i+')">✕</button>':'')+
       '<span class="amt"><span id="binv_'+i+'">$0</span><div class="s">本批已投入 / 目標 <b id="bamt_'+i+'">—</b></div></span></div>'+
       '<div id="bviz_'+i+'"></div>'+
       '<div id="bd_'+i+'" style="display:'+(S.open[i]?'':'none')+'">'+
@@ -609,7 +681,11 @@ function buildPlan(){
     w.appendChild(d);
   });
   w.querySelectorAll('input[type=date]').forEach(inp=>inp.addEventListener('input',e=>{
-    S.dates[+e.target.dataset.pi]=e.target.value;save();recalcPlan();}));
+    S.dates[+e.target.dataset.pi]=e.target.value;save();syncPlan();recalcPlan();}));
+  w.querySelectorAll('input.bname').forEach(inp=>inp.addEventListener('input',e=>{
+    const b=S.batches[+e.target.dataset.bi];if(b){b.name=e.target.value;save();syncPlan();}}));
+  w.querySelectorAll('input.bbud').forEach(inp=>inp.addEventListener('input',e=>{
+    const b=S.batches[+e.target.dataset.bi];if(b){b.budget=parseFloat(e.target.value)||0;save();syncPlan();recalcAlloc();}}));
   w.querySelectorAll('input[data-ff]').forEach(inp=>inp.addEventListener('input',e=>{
     const key=fkey(+e.target.dataset.fi,e.target.dataset.fk);
     const o=S.fills[key]||(S.fills[key]={});
@@ -618,13 +694,13 @@ function buildPlan(){
   buildHold();
 }
 function recalcPlan(){
-  const fund=gv('fund');const fx=gv('fx')||32;const today=todayStr();
+  const fund=TF();const fx=gv('fx')||32;const today=todayStr();
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
   /* 標準目標固定；前批超買/少買結轉到「第一個累計未達標的批」(activeIdx)，部分輸入也不跑掉；少買在進度條以橘色缺口顯示 */
   const NB=PLAN_DEF.length;
   /* 批次可不等額：依各批 pct 加權（前三批合併 75% + 待買 25%）。wf=各批比例(和=1)，wcum=累計比例 */
-  const W=PLAN_DEF.map(p=>(p.pct!=null?p.pct:100/NB));
-  const Wt=W.reduce((s,x)=>s+x,0)||100;
+  const W=PLAN_DEF.map((p,i)=>i===0?gv('fund'):(p.budget||0));/* 各批預算 */
+  const Wt=W.reduce((s,x)=>s+x,0)||1;
   const wf=W.map(x=>x/Wt);
   const wcum=[];{let c=0;for(let i=0;i<NB;i++){c+=wf[i];wcum[i]=c;}}
   const totalT={};ASSETS.forEach(a=>{totalT[a[0]]=fund*A[a[0]]/hold;});/* 各檔最終總目標$ */
@@ -633,7 +709,7 @@ function recalcPlan(){
   const batchAct=PLAN_DEF.map((p,i)=>{const m={};ASSETS.forEach(a=>{const k=a[0];const us=a[3]==='us';const f=getFill(i,k);m[k]=(f.p>0&&f.s>0)?f.p*f.s*(us?fx:1):0;});return m;});
   let activeIdx=-1;{let c=0;for(let i=0;i<NB;i++){let bt=0;ASSETS.forEach(a=>bt+=batchAct[i][a[0]]);c+=bt;if(c<fund*wcum[i]-1){activeIdx=i;break;}}}
   /* 結轉＝累計(之前實投−之前標準)，完整正負一律折入本批進度：超買→預填進度條；缺口→負進度(本批買入先吃掉缺口) */
-  const carryOf=(i,k)=>{let b=0;for(let j=0;j<i;j++)b+=batchAct[j][k];const stdPrev=totalT[k]*(i>0?wcum[i-1]:0);return b-stdPrev;};
+  const carryOf=(i,k)=>0;/* 2026-10-05 起不結轉：每批只看自己的預算與買入，整體相對目標的偏離看①的目標 vs 實際表 */
   let next=null;
   PLAN_DEF.forEach((p,i)=>{
     const isLast=(i===NB-1);
@@ -686,10 +762,7 @@ function recalcPlan(){
         '<span class="pamt">$'+f0(progTot)+' / $'+f0(tgtB)+'</span></div>';
       let note='';
       const netPrev=ASSETS.reduce((s,a)=>s+cPrev[a[0]],0);
-      if(i>0&&Math.abs(netPrev)>1){
-        const remainAll=fund-ASSETS.reduce((s,a)=>{let b=0;PLAN_DEF.forEach((p,j)=>b+=batchAct[j][a[0]]);return s+b;},0);
-        note='本批照 75/25 配置（目標 $'+f0(stdBatch)+'）。第1批的缺口/超買已折入上方各檔進度條（超買＝預填、缺口＝負進度，買入會先吃掉）→ 計入後最終實際還要買 ≈ <b>$'+f0(remainAll)+'</b>。';
-      }
+      if(i>0){note='本批預算 $'+f0(stdBatch)+' 依目標比例分到各檔；只看這批自己的買入，整體相對目標的偏離請看①的「目標 vs 實際」表。';}
       viz.innerHTML='<div style="margin:10px 0 2px">'+rows2+(note?'<div class="note" style="border:none;padding:5px 0 0;font-size:11px">'+note+'</div>':'')+'</div>';
     }
     const be=document.getElementById('binv_'+i);if(be)be.textContent='$'+f0(progTot);
@@ -727,10 +800,13 @@ function buildHold(){
       '<td class="b" id="ach_'+k+'">—</td>';
     tb.appendChild(tr);
   });
+  const tt=document.createElement('tr');tt.className='tot';
+  tt.innerHTML='<td class="b">合計</td><td id="gt_tot">—</td><td id="sh_tot">—</td><td id="avg_tot">—</td><td></td><td class="b" id="pld_tot">—</td><td class="b" id="pl_tot">—</td><td class="b" id="ach_tot">—</td>';
+  tb.appendChild(tt);
 }
 function recalcHold(){
-  const fund=gv('fund'),fx=gv('fx')||32;
-  let cost=0,val=0,adjCost=0,rlossTot=0;
+  const fund=TF(),fx=gv('fx')||32;
+  let cost=0,val=0,adjCost=0,rlossTot=0;const H={};
   ASSETS.forEach(a=>{
     const k=a[0];const us=a[3]==='us';const mult=us?fx:1;
     /* 由各批次買入彙總 */
@@ -744,13 +820,15 @@ function recalcHold(){
     const inv=tc*mult;                             /* 實際投入(達成/進度用) */
     const adjInv=(tc+rl)*mult;                     /* 調整後成本(損益用) */
     const cv=(isFinite(cur)&&cur>0&&sh>0)?cur*sh*mult:0;
-    const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='<b>'+(+A[k].toFixed(0))+'%</b>';
-    const she=document.getElementById('sh_'+k);if(she)she.innerHTML=sh>0?'<b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股':'—';
+    H[k]={sh:sh,cv:cv,inv:inv,adjInv:adjInv};
+    const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='<b>'+(+A[k].toFixed(0))+'%</b><div class="sub" id="gta_'+k+'">—</div>';
+    const she=document.getElementById('sh_'+k);if(she)she.innerHTML=sh>0?'<b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股<div class="sub">'+(cv>0?'市值 $'+fmtW(cv):'—')+'</div>':'—';
     const ave=document.getElementById('avg_'+k);
     if(ave){if(adjAvg==null)ave.textContent='—';
       else if(rl>0){const tip='重買均價 '+(+avg.toFixed(2)).toLocaleString()+(us?' US$':'')+' ＋ 已實現虧損 '+(us?'US$':'NT$')+(+rl.toFixed(2)).toLocaleString()+' ÷ '+(+sh.toFixed(2))+' 股 ＝ 調整後 '+(+adjAvg.toFixed(2)).toLocaleString();
         ave.innerHTML='<span class="tip" tabindex="0" data-tip="'+tip+'">'+(+adjAvg.toFixed(2)).toLocaleString()+'<span class="mut" style="font-size:10px;vertical-align:super">＊</span></span>';}
-      else ave.textContent=(+adjAvg.toFixed(2)).toLocaleString();}
+      else ave.textContent=(+adjAvg.toFixed(2)).toLocaleString();
+      if(adjAvg!=null)ave.innerHTML+='<div class="sub">成本 $'+fmtW(adjInv)+'</div>';}
     const cue=document.getElementById('cur_'+k);if(cue){const ss=curSess(k);cue.innerHTML=(isFinite(cur)&&cur>0)?((+cur.toFixed(2)).toLocaleString()+(ss?' <span class="mut" style="font-size:10px;font-weight:700">'+ss+'</span>':'')):'<span class="mut">抓取中</span>';}
     const pde=document.getElementById('pld_'+k);
     if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-adjInv;pde.textContent=(pld>=0?'+':'−')+'$'+f0(Math.abs(pld));pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
@@ -765,10 +843,22 @@ function recalcHold(){
       ae2.className='n b';}
     if(inv>0){cost+=inv;val+=cv;adjCost+=adjInv;rlossTot+=rl*mult;}
   });
+  /* 目標／實際 第二行＋合計列＋①實際配置 */
+  ASSETS.forEach(a=>{const k=a[0];const e=document.getElementById('gta_'+k);if(e)e.textContent=(val>0&&H[k].cv>0)?'實際 '+(H[k].cv/val*100).toFixed(1)+'%':'—';});
+  {const t=id=>document.getElementById(id);
+    if(t('sh_tot'))t('sh_tot').innerHTML=val>0?'<b>$'+f0(val)+'</b><div class="sub">市值合計</div>':'—';
+    if(t('avg_tot'))t('avg_tot').innerHTML=adjCost>0?'<b>$'+f0(adjCost)+'</b><div class="sub">成本合計'+(rlossTot>0?'＊':'')+'</div>':'—';
+    if(t('gt_tot'))t('gt_tot').innerHTML='<b>100%</b>';
+    const pnlT=val-adjCost,plcT=pnlT>=0?'up':'dn';
+    if(t('pld_tot')){t('pld_tot').innerHTML=(val>0&&adjCost>0)?(pnlT>=0?'+':'−')+'$'+f0(Math.abs(pnlT)):'—';t('pld_tot').className='b '+plcT;}
+    if(t('pl_tot')){t('pl_tot').innerHTML=(val>0&&adjCost>0)?(pnlT>=0?'+':'−')+Math.abs(pnlT/adjCost*100).toFixed(1)+'%':'—';t('pl_tot').className='b '+plcT;}
+    if(t('ach_tot')){const ac=fund>0?cost/fund*100:0;t('ach_tot').innerHTML='<span class="tip'+(ac>=102?' up':(ac>=98?' dn':''))+'" tabindex="0" data-tip="已投入 $'+f0(cost)+' ／ 總目標 $'+f0(fund)+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</span>';}}
+  renderActual(H,fund);
+  if(typeof renderPnlChart==='function')renderPnlChart();
   /* 總體買入達成率 vs 應達進度 */
   const pb=document.getElementById('progbox');
-  if(pb){const fund2=gv('fund');const today=todayStr();
-    let expPct=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=today)expPct+=(p.pct||0);});
+  if(pb){const fund2=TF();const today=todayStr();
+    let expPct=0;PLAN_DEF.forEach((p,i)=>{const b=i===0?gv('fund'):(p.budget||0);if(S.dates[i]<=today&&fund2>0)expPct+=b/fund2*100;});
     const actPct=fund2>0?cost/fund2*100:0;const lag=actPct-expPct;
     let nextI=-1,nextD='';for(let i=0;i<PLAN_DEF.length;i++){let any=false;ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0)any=true;});if(!any){nextI=i;nextD=S.dates[i];break;}}
     pb.innerHTML='<div style="margin:14px 0 4px">'+
@@ -794,8 +884,8 @@ function recalcHold(){
 }
 function resetPlan(){
   if(!confirm('重設分批計畫的日期與所有買入紀錄？'))return;
-  S={dates:PLAN_DEF.map(p=>p.d),open:[false,false,false,false],fills:{},hideF:true};
-  save();buildPlan();recalcPlan();
+  S={dates:[PLAN_BASE.d],open:[false],fills:{},hideF:true,batches:[{name:PLAN_BASE.name,budget:null}]};
+  syncPlan();save();buildPlan();recalcAlloc();
 }
 /* ───────── ③ 多市場位階 自動抓價 ───────── */
 let MKT=[['加權指數','^TWII',43226,46459],['那斯達克','^IXIC',null,null],['費半 SOX','^SOX',null,null],
@@ -997,15 +1087,17 @@ function renderPnlChart(){
   if(YMAX<=YMIN)YMAX=YMIN+step;
   const Y=v=>PT+(1-(v-YMIN)/(YMAX-YMIN))*(H-PT-PB);
   const ylab=v=>{const dec=step>=1e4?0:step>=1e3?1:2;return (v/1e4).toFixed(dec)+'萬';};/* 依刻度步長決定小數位，避免整排都顯示 $1.52M */
-  const pathAll=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
-  const pathSkip=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(v!=null&&isFinite(v)){s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;}else on=false;});return s.trim();};
+  /* 視窗外的日子不畫（否則全部壓在左邊界，變成一根垂直線） */
+  const inW=i=>days[i]>=mStartStr;
+  const pathAll=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(!inW(i))return;s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;});return s.trim();};
+  const pathSkip=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(!inW(i)){on=false;return;}if(v!=null&&isFinite(v)){s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;}else on=false;});return s.trim();};
   let grid='';for(let vv=YMIN;vv<=YMAX+0.5;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+ylab(vv)+'</text>';}
   let xticks='';const nT=6;for(let t=0;t<=nT;t++){const dt=new Date(mStart.getTime()+SPAN*t/nT);const xx=PL+(t/nT)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</text>';}
   let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
   let vLast=null;for(let i=val.length-1;i>=0;i--){if(val[i]!=null){vLast=val[i];break;}}
   const cNow=cost[cost.length-1],vline=(vLast!=null&&vLast>=cNow)?'#c0392b':'#0d9488';
   const valPath=pathSkip(val);
-  window.PNLI={days:days,cost:cost,val:val,xs:days.map(xOf),ycost:cost.map(Y),yval:val.map(v=>v!=null?Y(v):null),W:W};
+  {const wi=days.map((d,i)=>i).filter(inW);window.PNLI={days:wi.map(i=>days[i]),cost:wi.map(i=>cost[i]),val:wi.map(i=>val[i]),xs:wi.map(i=>xOf(days[i])),ycost:wi.map(i=>Y(cost[i])),yval:wi.map(i=>val[i]!=null?Y(val[i]):null),W:W};}
   const rbtn=(r,lbl)=>'<button onclick="setPnlRange(\''+r+'\')" style="font-size:12px;font-weight:700;padding:3px 11px;margin-left:6px;border-radius:14px;cursor:pointer;border:1px solid '+(RANGE===r?'var(--accent)':'var(--line)')+';background:'+(RANGE===r?'var(--accent)':'transparent')+';color:'+(RANGE===r?'#fff':'var(--mut)')+'">'+lbl+'</button>';
   box.innerHTML='<div class="barlbl" style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>損益走勢</span><span>'+rbtn('10d','最近10日')+rbtn('1m','最近一個月')+'</span></div>'+
     '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px" onpointermove="pnlHover(event)" onpointerdown="pnlHover(event)" onpointerleave="pnlLeave()">'+
@@ -1151,7 +1243,9 @@ function fbApplyRemote(d){
     _mig=migrateDates();
     S.rebuy0626v4=d.rebuy0626v4;/* 旗標以雲端為準：雲端還沒做過 v4 遷移時，下面就會把舊 fills/日程覆寫成單一批合併持倉並回寫 */
     if(d.fills)S.fills=d.fills;
+    if(d.batches)S.batches=d.batches;
     if(migrateRebuy())_mig=true;
+    syncPlan();
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
       Object.keys(m).forEach(k=>{if(d.assets[k]!=null){const e=document.getElementById(m[k]);if(e&&document.activeElement!==e)e.value=d.assets[k];}});}
     const f=document.getElementById('fund'),x=document.getElementById('fx');
@@ -1166,7 +1260,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v4:S.rebuy0626v4||false,t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,batches:S.batches||[],assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v4:S.rebuy0626v4||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
