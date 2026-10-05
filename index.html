@@ -122,6 +122,7 @@ h2.sect{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:21px
 .sect .hint{font-size:12.5px;color:var(--mut);font-weight:700;letter-spacing:.5px}
 .sect .sbtn{position:static;margin-left:auto;flex:0 0 auto}
 .secbody{margin-top:12px}
+.fxhd{margin-left:auto;display:inline-flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}.fxhd b{font-size:19px;font-weight:900;color:var(--accent)}.fxhd small{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.3px}.fxhd+.caret{margin-left:0}
 .mkstatus{background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:11.5px;color:var(--mut);font-weight:700;margin-left:10px;white-space:nowrap;letter-spacing:0}
 .mktctrl{margin-left:auto;display:flex;align-items:center;align-self:center;gap:10px}
 .mktctrl .mkstatus{margin-left:0}
@@ -222,7 +223,7 @@ th,td{padding:6px 4px;font-size:12px}
 .usdhint{display:none}
 .bkhd .amt{flex-basis:100%;text-align:left;margin-left:0;margin-top:2px;font-size:15px;display:flex;align-items:baseline;gap:8px}
 .bkhd .amt .s{font-size:11px}
-.mkstatus{font-size:10.5px;padding:2px 9px;margin-left:6px}
+.mkstatus{font-size:10.5px;padding:2px 9px;margin-left:6px}.fxhd b{font-size:16px}.fxhd small{font-size:10px}
 .mgrid{grid-template-columns:repeat(2,1fr);gap:8px}
 .mdrop{font-size:18px}
 #syncbtn{position:static;display:inline-block;margin:0 0 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -288,7 +289,7 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <div class="sechd" onclick="toggleSec('fx')">
-    <h2 class="sect"><span class="num">④</span>美元/台幣匯率<span class="mkstatus" id="fxstatus" style="margin-left:auto">—</span><span class="caret" id="ca_fx">▸</span></h2>
+    <h2 class="sect"><span class="num">④</span>美元/台幣匯率<span class="fxhd"><b id="fxstatus">—</b><small>USD/TWD</small></span><span class="caret" id="ca_fx">▸</span></h2>
   </div>
   <div class="secbody" id="sb_fx">
   <div id="fxchart"></div>
@@ -303,52 +304,6 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="secbody" id="sb_mkt">
   <div class="mgrid" id="mktgrid"></div>
   <div class="note">批次依日程機械執行，<b>位階僅供參考、不再觸發加碼</b>；唯一會改變動作的是「組合自第 1 批成本 −10%」的例外條款（見②）。區間標示：自近高 ≥15% 重挫、≥10% 深回檔、8–10% 留意。自動價可能延遲 15–20 分鐘，盤後為當日收盤。</div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="sechd" onclick="toggleSec('plan')">
-    <h2 class="sect"><span class="num">⑥</span>建倉日程<span class="caret" id="ca_plan">▸</span></h2>
-  </div>
-  <div class="secbody" id="sb_plan">
-  <table class="schtbl">
-    <thead><tr><th>批次</th><th>日期</th><th>比例</th><th>說明</th></tr></thead>
-    <tbody>
-      <tr><td class="c">整合建倉</td><td class="c">2026/6/12 起</td><td class="c">100%</td><td>不再分批：賣舊買新（解遺產稅）＋ 7/6-7/7 加碼，累積至目標配置</td></tr>
-    </tbody>
-  </table>
-  <div class="note">機械式：到點開盤就買、不擇時、拉開時間攤平成本。唯一例外：組合自第 1 批成本 −10% → 立即提前執行下一批，後續日期不變。</div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="sechd" onclick="toggleSec('view')">
-    <h2 class="sect"><span class="num">⑦</span>觀點與風險<span class="caret" id="ca_view">▸</span></h2>
-  </div>
-  <div class="secbody" id="sb_view">
-  <ul>
-    <li>看好美國（產業鏈頂端、高毛利）；<b>2330 是台股例外</b>—先進製程獨佔、本身是源頭。</li>
-    <li>VTI vs VOO 已比過：差距 ≤0.3pp，定稿選 VOO（純大型股）。最佳化也掃過：定稿已貼近效率前緣，不再調比例。</li>
-    <li class="warn">五檔同屬 AI 鏈、<b>同漲同跌</b>，分散有限 → 防禦靠組合外現金與分批紀律。</li>
-    <li class="warn">0050 在系統性股災不保護（2008 −43%），它的保險只對「台積電單一事件」有效。</li>
-    <li class="warn">美股 75% 含台幣匯率風險（現約 32）→ 用長期持有＋後兩批留台幣分批換匯處理。</li>
-    <li class="warn">過去 1 年台股翻倍是 20 年極端值，<b>不可外推</b>；規劃用 15–20 年年化（16–20%）再打折。</li>
-  </ul>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="sechd" onclick="toggleSec('next')">
-    <h2 class="sect"><span class="num">⑧</span>下一步<span class="caret" id="ca_next">▸</span></h2>
-  </div>
-  <div class="secbody" id="sb_next">
-  <ul>
-    <li><b>機械式日程</b>：6/12 補齊第 1 批 → 6/22 第 2 批 → 6/29 第 3 批 → 7/6 完成建倉。自己記日期，到日執行。</li>
-    <li><b>每批下單後</b>：成交價/股數記入 Erick_投資損益紀錄_共用.md，並回來更新②的「已投入金額」與批次狀態。</li>
-    <li><b>每日 17:00 排程</b>：標的改為 2330／0050（＋QQQ／VOO／GOOGL 收盤）。</li>
-    <li><b>季度檢視</b>：台積電實質曝險 >25%、或 GOOGL 實質 >28% 時再平衡。</li>
-  </ul>
-  <div class="note">數據紀律：台股＝證交所官方 API（交叉驗證 ✓）；位階自動價為 Yahoo 即時/收盤，僅供參考。本檔非投資建議。</div>
   </div>
 </section>
 
@@ -623,9 +578,9 @@ function togglePlan(i){
 }
 function toggleHide(){S.hideF=!S.hideF;save();recalcPlan();}
 /* ③④⑤ 收折（預設收起） */
-let SECS={mkt:false,fx:true,view:false,next:false,plan:true};
+let SECS={mkt:false,fx:true};
 try{const sv2=JSON.parse(localStorage.getItem('erick_secs_v1'));if(sv2)SECS=Object.assign(SECS,sv2);}catch(e){}
-function applySecs(){['mkt','fx','view','next','plan'].forEach(s=>{
+function applySecs(){['mkt','fx'].forEach(s=>{
   const b=document.getElementById('sb_'+s);if(b)b.style.display=SECS[s]?'':'none';
   const c=document.getElementById('ca_'+s);if(c)c.textContent=SECS[s]?'▾':'▸';});}
 function toggleSec(s){SECS[s]=!SECS[s];try{localStorage.setItem('erick_secs_v1',JSON.stringify(SECS));}catch(e){}applySecs();}
@@ -1041,9 +996,10 @@ function renderPnlChart(){
   let YMIN=Math.max(0,Math.floor((lo-span*0.12)/step)*step),YMAX=Math.ceil((hi+span*0.12)/step)*step;
   if(YMAX<=YMIN)YMAX=YMIN+step;
   const Y=v=>PT+(1-(v-YMIN)/(YMAX-YMIN))*(H-PT-PB);
+  const ylab=v=>{const dec=step>=1e4?0:step>=1e3?1:2;return (v/1e4).toFixed(dec)+'萬';};/* 依刻度步長決定小數位，避免整排都顯示 $1.52M */
   const pathAll=arr=>arr.map((v,i)=>(i?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
   const pathSkip=arr=>{let s='',on=false;arr.forEach((v,i)=>{if(v!=null&&isFinite(v)){s+=(on?'L':'M')+xOf(days[i]).toFixed(1)+' '+Y(v).toFixed(1)+' ';on=true;}else on=false;});return s.trim();};
-  let grid='';for(let vv=YMIN;vv<=YMAX+0.5;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+kfmt(vv)+'</text>';}
+  let grid='';for(let vv=YMIN;vv<=YMAX+0.5;vv+=step){const yy=Y(vv);grid+='<line x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'" stroke="#e7ddca" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#9a8f7a">$'+ylab(vv)+'</text>';}
   let xticks='';const nT=6;for(let t=0;t<=nT;t++){const dt=new Date(mStart.getTime()+SPAN*t/nT);const xx=PL+(t/nT)*(W-PL-PR);xticks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#f1ead9" stroke-width="1"/><text x="'+xx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#9a8f7a">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</text>';}
   let marks='';PLAN_DEF.forEach((p,i)=>{const ds=S.dates[i];if(ds>=mStartStr&&new Date(ds+'T00:00:00')<mEnd){const xx=xOf(ds);marks+='<line x1="'+xx.toFixed(1)+'" y1="'+PT+'" x2="'+xx.toFixed(1)+'" y2="'+(H-PB)+'" stroke="#b8ad97" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>';}});
   let vLast=null;for(let i=val.length-1;i>=0;i--){if(val[i]!=null){vLast=val[i];break;}}
@@ -1069,7 +1025,7 @@ async function buildPnlChart(){
   const box=document.getElementById('pnlchart');if(!box||pnlBusy)return;
   const need=[];
   ASSETS.forEach(a=>{const k=a[0];let sh=0;PLAN_DEF.forEach((p,i)=>{const f=getFill(i,k);if(f.p>0&&f.s>0)sh+=f.s;});
-    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(m&&m[1]&&!HIST[m[1]])need.push(m[1]);}});
+    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(!m||!m[1])return;const h=HIST[m[1]];const last=h?Object.keys(h).sort().pop():'';const stale=!h||last<dstr(new Date(Date.now()-4*864e5));/* 快取超過4天沒新收盤 → 重抓，否則走勢圖會變一條水平線 */if(stale)need.push(m[1]);}});
   if(!need.length)return;
   pnlBusy=true;
   try{await Promise.all(need.map(async sym=>{const h=await yhist(sym);if(h)HIST[sym]=h;}));
