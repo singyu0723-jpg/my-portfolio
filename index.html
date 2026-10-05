@@ -133,7 +133,9 @@ li.warn:before{background:var(--up)}
 .tip{position:relative;cursor:help;border-bottom:1px dotted var(--mut);outline:none}
 .tip::after{content:attr(data-tip);position:absolute;right:0;bottom:135%;background:var(--ink);color:#fffdf8;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:30}
 .tip:hover::after,.tip:focus::after,.tip:active::after{opacity:1}
-.tip.l::after{right:auto;left:0}.tip.b::after{bottom:auto;top:135%}
+/* 懸浮提示改由 JS 定位（#tipbox），自動夾在視窗內，不再被邊界吃掉 */
+.tip::after{display:none !important}
+#tipbox{position:fixed;z-index:999;background:var(--ink);color:#fffdf8;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;max-width:min(92vw,440px);white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 @media(max-width:680px){
   /* 手機：持倉表每格改兩行（總額／價格），五欄塞得進 402px 不用橫向捲 */
   .deck table.ctr .cm{font-size:12.5px}.deck table.ctr .sub.il{display:block;margin:2px 0 0;font-size:10px}.deck table.ctr .pct{display:block;margin:2px 0 0;font-size:11.5px}
@@ -1232,6 +1234,20 @@ function recalcAssets(){
 let fbRef=null,fbUnsub=null,fbTimer=null,fbApplying=false;
 loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();
 fetchMkt();
+/* 懸浮提示：共用一個 #tipbox，依元素位置計算、夾在視窗內；上方放不下就放下方 */
+(function(){const tb=document.createElement('div');tb.id='tipbox';document.body.appendChild(tb);let cur=null;
+  function show(el){const t=el.getAttribute('data-tip');if(!t)return;cur=el;tb.textContent=t;tb.style.opacity='1';tb.style.left='0px';tb.style.top='0px';
+    const r=el.getBoundingClientRect(),vw=window.innerWidth,w=tb.offsetWidth,h=tb.offsetHeight;
+    let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(vw-8-w,x));let y=r.top-h-8;if(y<8)y=r.bottom+8;
+    tb.style.left=x+'px';tb.style.top=y+'px';}
+  function hide(){cur=null;tb.style.opacity='0';}
+  const near=e=>(e.target&&e.target.closest)?e.target.closest('.tip'):null;
+  document.addEventListener('mouseover',e=>{const el=near(e);if(el){if(el!==cur)show(el);}else if(cur)hide();});
+  document.addEventListener('focusin',e=>{const el=near(e);if(el)show(el);});
+  document.addEventListener('focusout',()=>hide());
+  document.addEventListener('touchstart',e=>{const el=near(e);if(el){if(el!==cur)show(el);else hide();}else hide();},{passive:true});
+  window.addEventListener('scroll',()=>{if(cur)hide();},{passive:true});
+})();
 /* 手機下拉重新整理（pull-to-refresh）：下拉到頂放開 → 重新抓價 */
 (function(){const ptr=document.getElementById('ptr'),deck=document.querySelector('.deck');if(!ptr||!deck)return;let sy=0,active=false,dist=0,busy=false;const TH=65,MAX=100;
   const top=()=>window.scrollY||document.documentElement.scrollTop||0;
