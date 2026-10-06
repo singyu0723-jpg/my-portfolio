@@ -552,6 +552,12 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="note" style="border:none;padding-top:4px">依台新攤還試算表的算法重算：利息＝剩餘本金 × 3% × 實際天數 ÷ 365，月付 $19,312 固定，末期補足本金；前 36 期與銀行試算表逐筆一致。利率為指數型浮動，若台新三個月期定儲指數調整，月付金與利息會變。點年度列可展開每月明細。</div>
 </section>
 
+<section class="slide">
+  <h2 class="sect"><span class="num">📉</span>降槓桿進度</h2>
+  <div id="loan_lev"></div>
+  <div class="note" style="border:none;padding-top:4px">每月月付金裡的本金部分（第 1 期 $14,216，逐期增加）是用薪水還的，等於把「借來的錢」一塊一塊換成「自己的錢」；投資部位不會因此縮水。槓桿＝還欠銀行的本金 ÷ 評估工具②長期投入，超過 100% 表示借的比投入的多（多出來的是現金）。槓桿越低，投資要打贏的利息門檻就越低——這就是上方門檻表逐年下降的原因。</div>
+</section>
+
 </div>
 
 <div id="view-trades" style="display:none">
@@ -819,7 +825,17 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
     s+='<tr style="cursor:pointer" onclick="toggleLoanYr('+y+')"><td style="white-space:nowrap"><span class="caret" style="margin:0 6px 0 0;font-size:13px">'+(o?'▾':'▸')+'</span>第'+(y+1)+'年</td><td class="mut" style="white-space:nowrap">'+seg[0].y+'/'+seg[0].m+'–'+seg[11].y+'/'+seg[11].m+'</td><td class="b">$'+f0(tp)+'</td><td class="b" style="color:var(--dn)">$'+f0(ti)+'</td><td class="b">$'+f0(tpr)+'</td><td class="b">$'+f0(seg[11].bal)+'</td></tr>';
     if(o)seg.forEach(r=>{const done=r.t<=now;s+='<tr style="background:var(--chip)"><td class="mut" style="padding-left:26px;white-space:nowrap">第'+r.k+'期'+(done?' ✓':'')+'</td><td class="mut">'+dstr(r.t)+'</td><td>$'+f0(r.pay)+'</td><td style="color:var(--dn)">$'+f0(r.i)+'</td><td>$'+f0(r.p)+'</td><td>$'+f0(r.bal)+'</td></tr>';});}
   s+='<tr style="border-top:2px solid var(--line);font-weight:900"><td>合計</td><td></td><td class="b">$'+f0(R.reduce((a,r)=>a+r.pay,0))+'</td><td class="b" style="color:var(--dn)">$'+f0(totI)+'</td><td class="b">$'+f0(LOAN.P)+'</td><td></td></tr></table></div>';
-  if(sc)sc.innerHTML=s;}
+  if(sc)sc.innerHTML=s;
+  /* 降槓桿進度：每月還掉的本金＝借來的錢變成自己的錢；槓桿＝尚欠本金 ÷ 長期投入 */
+  const lv=document.getElementById('loan_lev');if(lv){const invL=(window.LTP&&LTP.inv>0)?LTP.inv:null;
+    const pts=[];pts.push({lab:'撥款時 2026/7/17',bal:LOAN.P,paid:0,cur:false});
+    if(np>0)pts.push({lab:'現在（已繳 '+np+' 期）',bal:bal,paid:paidP,cur:true});
+    for(let y=0;y<10;y++){const seg=R.slice(y*12,y*12+12);pts.push({lab:'第'+(y+1)+'年底 '+seg[11].y+'/'+seg[11].m,bal:seg[11].bal,paid:LOAN.P-seg[11].bal,cur:false});}
+    let L='<div class="twrap"><table class="ctr"><tr><th>時點</th><th>還欠銀行</th><th>已還本金<br><span class="mut" style="font-weight:700">（變成自己的錢）</span></th><th>'+(invL?'槓桿<br><span class="mut" style="font-weight:700">欠 ÷ 投入 $'+fmtW(invL)+'</span>':'槓桿')+'</th><th style="min-width:120px">借的錢 vs 自己的錢</th></tr>';
+    pts.forEach(p=>{const lev=invL?p.bal/invL*100:null;const own=Math.round(p.paid/LOAN.P*100),bor=100-own;
+      L+='<tr'+(p.cur?' style="background:var(--chip);font-weight:900"':'')+'><td style="white-space:nowrap">'+p.lab+'</td><td class="b">$'+f0(p.bal)+'</td><td class="b" style="color:var(--up)">$'+f0(p.paid)+'</td><td class="b" style="color:'+(lev!=null&&lev>=100?'var(--dn)':'var(--accent)')+'">'+(lev!=null?lev.toFixed(0)+'%':'—')+'</td>'+
+        '<td><div class="glbar" style="margin:0;height:12px;background:var(--up)"><i style="width:'+own+'%;background:var(--accent);float:right"></i></div><div class="mut" style="font-size:10.5px;font-weight:700;margin-top:2px">借 '+bor+'% · 自己 '+own+'%</div></td></tr>';});
+    L+='</table></div>';lv.innerHTML=L;}}
 /* ───────── 📒 個股交易（已平倉已實現，獨立於長期配置）───────── */
 const TRADE_SEED=[
   /* 台股：來源《台美股總損益與進出紀錄_2026-0618》每檔績效（含費用後） */
