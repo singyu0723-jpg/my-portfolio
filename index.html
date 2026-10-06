@@ -287,7 +287,7 @@ th,td{padding:6px 4px;font-size:12px}
 <div class="deck">
 
 <div class="tabs">
-  <div class="tab on" id="tab-tool" onclick="showView('tool')">🛠 評估工具</div>
+  <div class="tab on" id="tab-tool" onclick="showView('tool')">📈 長期投資</div>
   <div class="tab" id="tab-assets" onclick="showView('assets')">💰 資產配置</div>
   <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬回測</div>
   <div class="tab" id="tab-trades" onclick="showView('trades')">📒 個股交易</div>
@@ -299,8 +299,8 @@ th,td{padding:6px 4px;font-size:12px}
 
 <section class="slide">
   <button class="resetbtn" id="syncbtn" onclick="fbAuthClick()" style="border-color:var(--accent);color:var(--accent)">⋯ 連線中</button>
-  <div class="kicker">投資評估工具 · Erick</div>
-  <h1>穩健核心配置</h1>
+  <div class="kicker">長期投資 · Erick</div>
+  <h1>長期投資配置</h1>
   <div class="sub">QQQ 30｜VOO 25｜GOOGL 20｜2330 15｜0050 10</div>
   <input type="hidden" id="fund" value="0">
 </section>
@@ -412,7 +412,7 @@ th,td{padding:6px 4px;font-size:12px}
     </div>
   </div>
 
-  <div class="note">投資部位 ＝ 自有 ＋ 貸款 − 保留現金。第一階段先動用自有資金；貸款到位後補足第二階段，現金回到保留目標。<b>提醒：</b>貸款投資屬槓桿，放大賺賠；第一階段現金若低於醫療保留目標，急用時需賣出投資（可能撞低點）。本頁僅供規劃試算，非投資建議。<br>投資部位的 QQQ/VOO/GOOGL/2330/0050 比例沿用「評估工具」分頁的設定，於此頁同步顯示。</div>
+  <div class="note">投資部位 ＝ 自有 ＋ 貸款 − 保留現金。第一階段先動用自有資金；貸款到位後補足第二階段，現金回到保留目標。<b>提醒：</b>貸款投資屬槓桿，放大賺賠；第一階段現金若低於醫療保留目標，急用時需賣出投資（可能撞低點）。本頁僅供規劃試算，非投資建議。<br>投資部位的 QQQ/VOO/GOOGL/2330/0050 比例沿用「長期投資」分頁的設定，於此頁同步顯示。</div>
 </section>
 
 </div>
@@ -543,7 +543,7 @@ th,td{padding:6px 4px;font-size:12px}
 <section class="slide">
   <h2 class="sect"><span class="num">🎯</span>打贏利息要做到的績效</h2>
   <div id="loan_thr"></div>
-  <div class="note" style="border:none;padding-top:4px">門檻＝當年利息 ÷ 投入本金。「以 200 萬計」＝整筆貸款都投入；「以長期投入計」＝評估工具②目前真實買入成本（不含換倉虧損），隨持倉即時變動。手續費 $9,000 未攤入年度門檻。</div>
+  <div class="note" style="border:none;padding-top:4px">門檻＝當年利息 ÷ 投入本金。「以 200 萬計」＝整筆貸款都投入；「以長期投入計」＝長期投資②目前真實買入成本（不含換倉虧損），隨持倉即時變動。手續費 $9,000 未攤入年度門檻。</div>
 </section>
 
 <section class="slide">
@@ -555,7 +555,7 @@ th,td{padding:6px 4px;font-size:12px}
 <section class="slide">
   <h2 class="sect"><span class="num">📉</span>降槓桿進度</h2>
   <div id="loan_lev"></div>
-  <div class="note" style="border:none;padding-top:4px">每月月付金裡的本金部分（第 1 期 $14,216，逐期增加）是用薪水還的，等於把「借來的錢」一塊一塊換成「自己的錢」；投資部位不會因此縮水。槓桿＝還欠銀行的本金 ÷ 評估工具②長期投入，超過 100% 表示借的比投入的多（多出來的是現金）。槓桿越低，投資要打贏的利息門檻就越低——這就是上方門檻表逐年下降的原因。</div>
+  <div class="note" style="border:none;padding-top:4px">每月月付金裡的本金部分（第 1 期 $14,216，逐期增加）是用薪水還的，等於把「借來的錢」一塊一塊換成「自己的錢」；投資部位不會因此縮水。槓桿＝還欠銀行的本金 ÷ 長期投資②長期投入，超過 100% 表示借的比投入的多（多出來的是現金）。槓桿越低，投資要打贏的利息門檻就越低——這就是上方門檻表逐年下降的原因。</div>
 </section>
 
 </div>
@@ -565,7 +565,7 @@ th,td{padding:6px 4px;font-size:12px}
 <section class="slide">
   <h2 class="sect"><span class="num">Σ</span>總損益總覽</h2>
   <div id="tr_top"></div>
-  <div class="note" style="border:none;padding-top:4px">長期投資＝評估工具②的未實現損益（成本含舊帳戶已實現虧損）；個股交易＝本頁已平倉紀錄的已實現損益，美股依各筆匯率換算台幣。兩者獨立計算，合計僅供總覽。</div>
+  <div class="note" style="border:none;padding-top:4px">長期投資＝長期投資分頁②的未實現損益（成本含舊帳戶已實現虧損）；個股交易＝本頁已平倉紀錄的已實現損益，美股依各筆匯率換算台幣。兩者獨立計算，合計僅供總覽。</div>
 </section>
 
 <section class="slide">
@@ -800,12 +800,12 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
     const Dall={what:'總損益：今年操作以來的全部績效（＝ 📒 頂部的總損益）。\n損益 ＝ 長期投資未實現 ＋ 個股持有中未實現 ＋ 個股已實現（含 7/17 撥款前的 5–6 月交易）。\n投入 ＝ ②長期真實投入 ＋ 📒 個股持有成本。',
       pnl:'損益 ＝ 長期未實現 '+sgn(PP.lt||0)+' ＋ 個股持有中未實現 '+sgn(PP.unr||0)+' ＋ 個股已實現 '+sgn(PP.real||0)+'（＝ 📒 總損益）',
       base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（不含換倉虧損）＋ 📒 個股持有成本 $'+f0(pc0)+' ＝ $'+f0((hasLt?lt.inv:0)+pc0)};
-    const Dlt={what:'只算長期：只看評估工具②的 QQQ／VOO／GOOGL／2330／0050 長期部位。\n損益 ＝ ②未實現損益（成本已含舊帳戶換倉虧損）。\n投入 ＝ ②真實買入成本（不含換倉虧損），與下方「以長期投入計」同一個數。',
+    const Dlt={what:'只算長期：只看長期投資②的 QQQ／VOO／GOOGL／2330／0050 長期部位。\n損益 ＝ ②未實現損益（成本已含舊帳戶換倉虧損）。\n投入 ＝ ②真實買入成本（不含換倉虧損），與下方「以長期投入計」同一個數。',
       pnl:'損益 ＝ ②長期投資未實現 '+sgn(hasLt?lt.pnl:0)+'（市值 $'+f0(hasLt?lt.val:0)+' − 成本 $'+f0(hasLt?lt.cost:0)+'，成本含換倉虧損）',
       base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（各批買入價 × 股數，不含換倉虧損）'};
     cov='<div class="pnlcell" style="flex:2.4;min-width:290px;border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">'+T('第 '+(yrNow+1)+' 年（'+R[yrNow*12].y+'/'+R[yrNow*12].m+'–'+R[yrNow*12+11].y+'/'+R[yrNow*12+11].m+'）12 期利息合計 $'+f0(yi)+'。\n投資賺到的錢要超過這個數，這一年借錢才划算。','今年要打贏的利息 $'+f0(yi)+'（第 '+(yrNow+1)+' 年）')+'</span>'+
-      row('總損益',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'評估工具抓價後顯示',Dall)+
-      row('只算長期',hasLt?lt.pnl:null,hasLt?lt.inv:0,'評估工具抓價後顯示',Dlt)+'</div>';}
+      row('總損益',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'長期投資抓價後顯示',Dall)+
+      row('只算長期',hasLt?lt.pnl:null,hasLt?lt.inv:0,'長期投資抓價後顯示',Dlt)+'</div>';}
   top.innerHTML='<div class="chips">'+
    '<div class="chip"><div class="l">貸款本金</div><div class="v">$'+f0(LOAN.P)+'</div><div class="s">台新 信貸本利攤指數 · 手續費 $'+f0(LOAN.fee)+'</div></div>'+
    '<div class="chip"><div class="l">年利率</div><div class="v">'+(LOAN.r*100).toFixed(2)+'%</div><div class="s">指數型浮動 · 總費用年百分率 3.09%</div></div>'+
@@ -815,7 +815,7 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
    '<div class="pnlcell" style="min-width:200px"><span class="pl">貸款進度</span><b>'+np+' / '+LOAN.n+' 期</b><span class="mut" style="font-size:11px;font-weight:700;line-height:1.7">'+(next?'下期 '+dstr(next.t)+' $'+f0(next.pay):'已繳清')+'<br>剩餘本金 $'+f0(bal)+'<br>已還本金 $'+f0(paidP)+'</span></div>'+cov+
   '</div></div>';
   const inv=(window.LTP&&LTP.inv>0)?LTP.inv:null;const thr=document.getElementById('loan_thr');
-  let h='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>當年利息</th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 2,000,000。把整筆貸款都當成投入。第 1 年不到 3%，是因為本息平均攤還下本金逐月減少（第 1 期以 200 萬計息、第 12 期只剩 183 萬），全年平均約 192 萬在付 3%。">以 200 萬計</span></th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 評估工具②目前真實買入成本（不含換倉虧損）。這才是你實際投入的錢要做到的報酬率，隨持倉即時變動。">以長期投入計</span>'+(inv?'<br><span class="mut" style="font-weight:700">$'+fmtW(inv)+'</span>':'')+'</th></tr>';
+  let h='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>當年利息</th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 2,000,000。把整筆貸款都當成投入。第 1 年不到 3%，是因為本息平均攤還下本金逐月減少（第 1 期以 200 萬計息、第 12 期只剩 183 萬），全年平均約 192 萬在付 3%。">以 200 萬計</span></th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 長期投資②目前真實買入成本（不含換倉虧損）。這才是你實際投入的錢要做到的報酬率，隨持倉即時變動。">以長期投入計</span>'+(inv?'<br><span class="mut" style="font-weight:700">$'+fmtW(inv)+'</span>':'')+'</th></tr>';
   for(let y=0;y<10;y++){const seg=R.slice(y*12,y*12+12);const yi=yI(y);const cur=y===yrNow;
     h+='<tr'+(cur?' style="background:var(--chip);font-weight:900"':'')+'><td style="white-space:nowrap">第'+(y+1)+'年'+(cur?' <span class="mut" style="font-size:10.5px">← 現在</span>':'')+'</td><td class="mut" style="white-space:nowrap">'+seg[0].y+'/'+seg[0].m+'–'+seg[11].y+'/'+seg[11].m+'</td><td class="b">$'+f0(yi)+'</td><td class="b" style="color:var(--accent)">'+(yi/LOAN.P*100).toFixed(2)+'%</td><td class="b" style="color:var(--accent)">'+(inv?(yi/inv*100).toFixed(2)+'%':'—')+'</td></tr>';}
   h+='<tr style="border-top:2px solid var(--line);font-weight:900"><td>10 年合計</td><td class="mut">年均</td><td class="b">$'+f0(totI)+'</td><td class="b">'+(totI/LOAN.P*10).toFixed(2)+'% / 年</td><td class="b">'+(inv?(totI/inv*10).toFixed(2)+'% / 年':'—')+'</td></tr></table></div>';
@@ -940,7 +940,7 @@ function renderTrades(){
   let unr=0,unrN=0,posCost=0,posVal=0;S.pos.forEach(o=>{const u=posUnreal(o);const mult=o.m==='us'?(gv('fx')||32):1;posCost+=(o.p||0)*(o.q||0)*mult;if(u!=null){unr+=u;unrN++;posVal+=posPrice(o)*o.q*mult;}});
   const tot=real+ltp+unr;window.TOTPNL=tot;window.POSCOST=posCost;window.PNLPARTS={lt:ltp,unr:unr,real:real};
   top.innerHTML='<div class="pnlcard" style="margin-top:6px"><div class="pnlnums">'+
-    '<div class="pnlcell"><span class="pl">長期投資（未實現）</span><b style="color:'+(lt?cl(ltp):'var(--mut)')+'">'+(lt?sg(ltp):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(lt?('市值 $'+f0(lt.val)+' · 成本 $'+f0(lt.cost)+' · '+(lt.cost>0?((ltp>=0?'+':'')+(ltp/lt.cost*100).toFixed(1)+'%'):'')):'評估工具抓價後顯示')+'</span></div>'+
+    '<div class="pnlcell"><span class="pl">長期投資（未實現）</span><b style="color:'+(lt?cl(ltp):'var(--mut)')+'">'+(lt?sg(ltp):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(lt?('市值 $'+f0(lt.val)+' · 成本 $'+f0(lt.cost)+' · '+(lt.cost>0?((ltp>=0?'+':'')+(ltp/lt.cost*100).toFixed(1)+'%'):'')):'長期投資抓價後顯示')+'</span></div>'+
     '<div class="pnlcell"><span class="pl">個股持有中（未實現）</span><b style="color:'+(S.pos.length?cl(unr):'var(--mut)')+'">'+(S.pos.length?sg(unr):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(S.pos.length?(unrN+'/'+S.pos.length+' 檔有報價 · 成本 $'+f0(posCost)+(posCost>0&&unrN?' · '+(unr>=0?'+':'')+(unr/posCost*100).toFixed(1)+'%':'')):'尚無持有中個股')+'</span></div>'+
     '<div class="pnlcell"><span class="pl">個股交易（已實現）</span><b style="color:'+cl(real)+'">'+sg(real)+'</b><span class="mut" style="font-size:11px;font-weight:700">台股 '+sg(tw)+' · 美股 '+sg(usTWD)+'（'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'）</span></div>'+
     '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股未實現 ＋ 個股已實現</span></div></div></div>';
@@ -1490,7 +1490,7 @@ function recalcAssets(){
   const invest=p1+p2;
   const p1cash=Math.max(0,own-p1);
   const cashAfter=Math.max(0,total-invest);
-  /* 投資總額 = 第一+第二階段，同步給評估工具（隱藏 #fund）並重算批次/配置 */
+  /* 投資總額 = 第一+第二階段，同步給長期投資（隱藏 #fund）並重算批次/配置 */
   const fe=document.getElementById('fund');if(fe&&(+fe.value||0)!==invest){fe.value=invest;if(typeof recalcAlloc==='function')recalcAlloc();}
   const hold=KEYS.reduce((s,k)=>s+A[k],0)||100;
   const sb=document.getElementById('as_srcbar');
