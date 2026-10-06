@@ -48,6 +48,8 @@ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-ser
 .tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}.tgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--mut)}.tgrid input,.tgrid select{width:100%;font-family:inherit;font-size:14px;font-weight:700;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
 .trt td,.trt th{white-space:nowrap}.trt .del{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:12px}.trt .del:hover{color:var(--up);border-color:var(--up)}
 .trt td.note{text-align:left;font-size:11.5px;color:var(--mut);max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.post td,.post th{white-space:nowrap}.post .act{display:inline-flex;gap:4px}.post .act button{background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;font-weight:800;color:var(--accent)}.post .act button.x{color:var(--mut)}
+@media(max-width:680px){.post th:nth-child(3),.post td:nth-child(3),.post th:nth-child(5),.post td:nth-child(5){display:none}.post td,.post th{padding:7px 4px;font-size:12px}}
 .mkt{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;margin-left:5px;vertical-align:1px}.mkt.tw{background:rgba(189,132,32,.15);color:#8a5e10}.mkt.us{background:rgba(13,148,136,.14);color:#0b6b63}
 @media(max-width:680px){.tgrid{grid-template-columns:1fr 1fr}.trt td.note{display:none}.trt th:nth-child(8),.trt th:nth-child(4),.trt td:nth-child(4),.trt th:nth-child(5),.trt td:nth-child(5){display:none}.trt td,.trt th{padding:7px 4px;font-size:12px}}
 @media(max-width:680px){.brow{gap:8px}.brow .bnm{width:78px;font-size:12px}.brow .bval{flex-basis:66px}.brow .bval b{font-size:13.5px}.brow .bdev{flex-basis:58px;font-size:11px}}
@@ -531,6 +533,27 @@ th,td{padding:6px 4px;font-size:12px}
 </section>
 
 <section class="slide">
+  <h2 class="sect"><span class="num">📈</span>持有中（未實現）<button class="resetbtn sbtn" onclick="togglePosForm()">＋ 新增持股</button></h2>
+  <div id="pos_form" style="display:none;margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px">
+    <div class="tgrid">
+      <label>市場<select id="po_m"><option value="tw">台股</option><option value="us">美股</option></select></label>
+      <label>代號<input type="text" id="po_c" placeholder="台股填 3665；美股填 NVDA"></label>
+      <label>名稱（選填）<input type="text" id="po_s" placeholder="貿聯-KY"></label>
+      <label>買入日<input type="date" id="po_d"></label>
+      <label>股數<input type="number" id="po_q" step="any" min="0" placeholder="25"></label>
+      <label>買入均價<input type="number" id="po_p" step="any" min="0" placeholder="每股成交價"></label>
+      <label style="grid-column:span 2">備註<input type="text" id="po_n" placeholder="波段／財報前…"></label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end"><button class="btn ghost" onclick="togglePosForm()">取消</button><button class="btn" onclick="addPos()">儲存持股</button></div>
+  </div>
+  <div class="twrap" style="margin-top:12px"><table class="ctr post">
+    <tr><th>標的</th><th>股數</th><th>買入均價</th><th>現價</th><th>成本</th><th>市值</th><th>未實現損益</th><th></th></tr>
+    <tbody id="pos_body"></tbody>
+  </table></div>
+  <div class="note" style="border:none;padding-top:4px">現價：台股走證交所即時、美股走 Yahoo（延遲 15–20 分）；按上方「↻ 重新抓價」會一起更新。未實現損益未扣手續費／證交稅，平倉時再填券商實際數字。</div>
+</section>
+
+<section class="slide">
   <h2 class="sect"><span class="num">📒</span>個股交易紀錄<button class="resetbtn sbtn" id="tr_addbtn" onclick="toggleTrForm()">＋ 新增一筆</button></h2>
   <div id="tr_sum"></div>
   <div id="tr_form" style="display:none;margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px">
@@ -705,7 +728,7 @@ function migrateRebuy(){
   return true;
 }
 try{const sv=JSON.parse(localStorage.getItem(LSKEY));
-  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v4)S.rebuy0626v4=sv.rebuy0626v4;if(sv.batches)S.batches=sv.batches;if(sv.trades)S.trades=sv.trades;if(sv.tradesSeeded)S.tradesSeeded=true;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
+  if(sv){if(sv.dates)S.dates=sv.dates;if(sv.fills)S.fills=sv.fills;if(sv.rebuy0626v4)S.rebuy0626v4=sv.rebuy0626v4;if(sv.batches)S.batches=sv.batches;if(sv.trades)S.trades=sv.trades;if(sv.tradesSeeded)S.tradesSeeded=true;if(sv.pos)S.pos=sv.pos;}/* 收折與隱藏為瀏覽狀態，每次開啟都回到預設：只展示第 1 批、全部收合 */
 }catch(e){}
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
@@ -743,6 +766,44 @@ function seedTrades(){if(S.tradesSeeded)return false;S.trades=TRADE_SEED.map(t=>
 if(!S.trades)S.trades=[];
 if(seedTrades()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
 function trPL(t){return (t.p!=null&&isFinite(t.p))?t.p:((t.a||0)-(t.b||0));}
+/* ── 持有中（未實現）：S.pos=[{d,m,c,s,q,p,n}]，現價快取 POSPX[key]={price,sess,t} ── */
+if(!S.pos)S.pos=[];
+let POSPX={};try{POSPX=JSON.parse(localStorage.getItem('erick_pospx_v1'))||{};}catch(e){}
+const posKey=o=>(o.m==='us'?'US:':'TW:')+String(o.c||'').trim().toUpperCase();
+function posPrice(o){const r=POSPX[posKey(o)];return (r&&isFinite(r.price)&&r.price>0)?r.price:null;}
+function posUnreal(o){const px=posPrice(o);if(px==null)return null;return (px-(o.p||0))*(o.q||0)*(o.m==='us'?(gv('fx')||32):1);}
+let posBusy=false;
+async function fetchPosPx(){
+  if(posBusy||!S.pos.length)return;posBusy=true;
+  try{const tw=S.pos.filter(o=>o.m!=='us').map(o=>String(o.c).trim());const us=S.pos.filter(o=>o.m==='us').map(o=>String(o.c).trim().toUpperCase());
+    const uniq=a=>a.filter((v,i)=>a.indexOf(v)===i);
+    const jobs=[];
+    if(tw.length)jobs.push(twMis(uniq(tw)).then(r=>{if(r)Object.keys(r).forEach(c=>{POSPX['TW:'+c.toUpperCase()]={price:r[c],sess:'即時',t:Date.now()};});
+      /* MIS 抓不到的（上櫃、ETF 等）退 Yahoo */
+      return Promise.all(uniq(tw).filter(c=>!(r&&isFinite(r[c]))).map(c=>yget(c+'.TW').then(y=>{if(y)POSPX['TW:'+c.toUpperCase()]={price:y.price,sess:y.sess||'',t:Date.now()};})));}));
+    uniq(us).forEach(sym=>jobs.push(yget(sym).then(y=>{if(y)POSPX['US:'+sym]={price:y.price,sess:y.sess||'',t:Date.now()};})));
+    await Promise.all(jobs);
+    try{localStorage.setItem('erick_pospx_v1',JSON.stringify(POSPX));}catch(e){}
+  }finally{posBusy=false;renderTrades();}
+}
+function togglePosForm(){const f=document.getElementById('pos_form');if(!f)return;const on=f.style.display==='none';f.style.display=on?'':'none';if(on){const d=document.getElementById('po_d');if(d&&!d.value)d.value=todayStr();}}
+function addPos(){
+  const g=id=>document.getElementById(id);const m=g('po_m').value,c=(g('po_c').value||'').trim(),nm=(g('po_s').value||'').trim();
+  const q=parseFloat(g('po_q').value)||0,p=parseFloat(g('po_p').value)||0;
+  if(!c||q<=0||p<=0){alert('請填代號、股數與買入均價');return;}
+  S.pos.push({d:g('po_d').value||todayStr(),m:m,c:m==='us'?c.toUpperCase():c,s:nm,q:q,p:p,n:(g('po_n').value||'').trim()});
+  save();['po_c','po_s','po_q','po_p','po_n'].forEach(id=>g(id).value='');togglePosForm();renderTrades();fetchPosPx();
+}
+function delPos(i){const o=S.pos[i];if(!o)return;if(!confirm('刪除持股 '+(o.s||o.c)+'？（不會寫入交易紀錄）'))return;S.pos.splice(i,1);save();renderTrades();}
+function closePos(i){
+  const o=S.pos[i];if(!o)return;const us=o.m==='us';const px=posPrice(o);
+  const sp=prompt((o.s||o.c)+' 平倉：請填「賣出總額」（帳面收入，扣費用後）'+(us?'，美元':'，台幣'),px?String(Math.round(px*o.q*100)/100):'');if(sp===null)return;
+  const a=parseFloat(sp);if(!isFinite(a)||a<=0){alert('賣出總額要是數字');return;}
+  const bp=prompt('買入總額（投資成本，含費用）',String(Math.round(o.p*o.q*100)/100));if(bp===null)return;
+  const b=parseFloat(bp)||Math.round(o.p*o.q*100)/100;
+  S.trades.push({d:todayStr(),m:o.m,s:(o.s?o.s+' ':'')+o.c,q:o.q,b:b,a:a,p:null,fx:us?(gv('fx')||32):1,n:(o.n?o.n+'；':'')+'由持有中平倉（買 '+o.d+'）'});
+  S.pos.splice(i,1);save();renderTrades();
+}
 function trTWD(t){return trPL(t)*(t.m==='us'?(t.fx||gv('fx')||32):1);}
 function toggleTrForm(){const f=document.getElementById('tr_form');if(!f)return;const on=f.style.display==='none';f.style.display=on?'':'none';
   if(on){const d=document.getElementById('tr_d');if(d&&!d.value)d.value=todayStr();const fx=document.getElementById('tr_fx');if(fx&&!fx.value)fx.value=(gv('fx')||32).toFixed(2);}}
@@ -762,21 +823,34 @@ function renderTrades(){
   let tw=0,usd=0,usTWD=0,win=0;
   S.trades.forEach(t=>{const pl=trPL(t);if(pl>0)win++;if(t.m==='us'){usd+=pl;usTWD+=trTWD(t);}else tw+=pl;});
   const real=tw+usTWD;const n=S.trades.length;
-  const lt=window.LTP||null;const ltp=lt?lt.pnl:0;const tot=real+ltp;
+  const lt=window.LTP||null;const ltp=lt?lt.pnl:0;
   const sg=v=>(v>=0?'+':'−')+'$'+f0(Math.abs(v));const cl=v=>v>=0?'var(--up)':'var(--dn)';
+  /* 持有中 */
+  let unr=0,unrN=0,posCost=0,posVal=0;S.pos.forEach(o=>{const u=posUnreal(o);const mult=o.m==='us'?(gv('fx')||32):1;posCost+=(o.p||0)*(o.q||0)*mult;if(u!=null){unr+=u;unrN++;posVal+=posPrice(o)*o.q*mult;}});
+  const tot=real+ltp+unr;
   top.innerHTML='<div class="pnlcard" style="margin-top:6px"><div class="pnlnums">'+
     '<div class="pnlcell"><span class="pl">長期投資（未實現）</span><b style="color:'+(lt?cl(ltp):'var(--mut)')+'">'+(lt?sg(ltp):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(lt?('市值 $'+f0(lt.val)+' · 成本 $'+f0(lt.cost)+' · '+(lt.cost>0?((ltp>=0?'+':'')+(ltp/lt.cost*100).toFixed(1)+'%'):'')):'評估工具抓價後顯示')+'</span></div>'+
-    '<div class="pnlcell"><span class="pl">個股交易（已實現）</span><b style="color:'+cl(real)+'">'+sg(real)+'</b><span class="mut" style="font-size:11px;font-weight:700">台股 '+sg(tw)+' · 美股 '+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'（≈'+sg(usTWD)+'）</span></div>'+
-    '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股已實現</span></div></div></div>';
+    '<div class="pnlcell"><span class="pl">個股持有中（未實現）</span><b style="color:'+(S.pos.length?cl(unr):'var(--mut)')+'">'+(S.pos.length?sg(unr):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(S.pos.length?(unrN+'/'+S.pos.length+' 檔有報價 · 成本 $'+f0(posCost)+(posCost>0&&unrN?' · '+(unr>=0?'+':'')+(unr/posCost*100).toFixed(1)+'%':'')):'尚無持有中個股')+'</span></div>'+
+    '<div class="pnlcell"><span class="pl">個股交易（已實現）</span><b style="color:'+cl(real)+'">'+sg(real)+'</b><span class="mut" style="font-size:11px;font-weight:700">台股 '+sg(tw)+' · 美股 '+sg(usTWD)+'（'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'）</span></div>'+
+    '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股未實現 ＋ 個股已實現</span></div></div></div>';
+  const pb=document.getElementById('pos_body');
+  if(pb){pb.innerHTML=S.pos.map((o,i)=>{const us=o.m==='us';const cur=us?'US$':'$';const px=posPrice(o);const r=POSPX[posKey(o)];const mult=us?(gv('fx')||32):1;const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(px!=null&&o.p>0)?((px/o.p-1)*100):null;
+      return '<tr><td class="b" style="text-align:left">'+(o.s?o.s+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span><div class="sub" style="font-size:10.5px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</div></td>'+
+        '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td>'+
+        '<td>'+(px!=null?(cur+(+px.toFixed(2)).toLocaleString()+(r&&r.sess?'<span class="sub il" style="margin-left:3px">'+r.sess+'</span>':'')):'<span class="mut">抓取中</span>')+'</td>'+
+        '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
+        '<td>'+(px!=null?(cur+f0(px*o.q)+(us?'<div class="sub">≈$'+f0(px*o.q*mult)+'</div>':'')):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'+(us?'<div class="sub">'+(u>=0?'+':'−')+'US$'+Math.abs((px-o.p)*o.q).toFixed(2)+'</div>':'')):'—')+'</td>'+
+        '<td><span class="act"><button onclick="closePos('+i+')" title="平倉並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+i+')" title="刪除">✕</button></span></td></tr>';}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
   if(sum)sum.innerHTML='<div class="chips" style="margin-top:8px"><div class="chip"><div class="l">台股已實現</div><div class="v" style="color:'+cl(tw)+'">'+sg(tw)+'</div><div class="s">'+S.trades.filter(t=>t.m!=='us').length+' 筆</div></div>'+
-    '<div class="chip"><div class="l">美股已實現</div><div class="v" style="color:'+cl(usd)+'">'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'</div><div class="s">≈ '+sg(usTWD)+' · '+S.trades.filter(t=>t.m==='us').length+' 筆</div></div>'+
+    '<div class="chip"><div class="l">美股已實現</div><div class="v" style="color:'+cl(usTWD)+'">'+sg(usTWD)+'</div><div class="s">'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+' · '+S.trades.filter(t=>t.m==='us').length+' 筆</div></div>'+
     '<div class="chip"><div class="l">勝率</div><div class="v">'+(n?Math.round(win/n*100):0)+'%</div><div class="s">'+win+' 賺 / '+(n-win)+' 賠 · 共 '+n+' 筆</div></div></div>';
   if(tb){tb.innerHTML=rows.map(t=>{const us=t.m==='us';const pl=trPL(t);const cur=us?'US$':'$';const rr=(t.b>0)?(pl/t.b*100):null;
     return '<tr><td>'+(t.d||'').slice(5).replace('-','/')+'<span class="sub il" style="margin-left:4px">'+(t.d||'').slice(0,4)+'</span></td>'+
       '<td class="b" style="text-align:left">'+t.s+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span></td>'+
       '<td>'+(t.q?(+t.q).toLocaleString():'—')+'</td>'+
       '<td>'+(t.b?cur+f0(t.b):'—')+'</td><td>'+(t.a?cur+f0(t.a):'—')+'</td>'+
-      '<td class="b" style="color:'+cl(pl)+'">'+(pl>=0?'+':'−')+cur+(us?Math.abs(pl).toFixed(2):f0(Math.abs(pl)))+(us?'<div class="sub">≈'+sg(trTWD(t))+'</div>':'')+'</td>'+
+      '<td class="b" style="color:'+cl(pl)+'">'+sg(trTWD(t))+(us?'<div class="sub">'+(pl>=0?'+':'−')+'US$'+Math.abs(pl).toFixed(2)+'</div>':'')+'</td>'+
       '<td class="b" style="color:'+cl(pl)+'">'+(rr==null?'—':((rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%'))+'</td>'+
       '<td class="note" title="'+(t.n||'').replace(/"/g,'&quot;')+'">'+(t.n||'')+'</td>'+
       '<td><button class="del" onclick="delTrade('+t.i+')" title="刪除">✕</button></td></tr>';}).join('')||'<tr><td colspan="9" class="mut">還沒有紀錄，按右上角「＋ 新增一筆」。</td></tr>';}
@@ -1145,6 +1219,7 @@ async function fetchMkt(){
   saveMktCache();
   buildPnlChart();
   buildFxChart();
+  if(typeof fetchPosPx==='function')fetchPosPx();
 }
 /* ───────── 損益走勢圖：歷史收盤＋批次日期重建（成本 staircase vs 市值） ───────── */
 let HIST={},pnlBusy=false,FXHIST=null,fxBusy=false;
@@ -1405,7 +1480,7 @@ function fbApplyRemote(d){
     S.rebuy0626v4=d.rebuy0626v4;/* 旗標以雲端為準：雲端還沒做過 v4 遷移時，下面就會把舊 fills/日程覆寫成單一批合併持倉並回寫 */
     if(d.fills)S.fills=d.fills;
     if(d.batches)S.batches=d.batches;
-    if(d.trades)S.trades=d.trades;if(d.tradesSeeded)S.tradesSeeded=true;
+    if(d.trades)S.trades=d.trades;if(d.tradesSeeded)S.tradesSeeded=true;if(d.pos)S.pos=d.pos;
     if(migrateRebuy())_mig=true;
     syncPlan();if(seedTrades())_mig=true;
     if(d.assets){S.assets=d.assets;const m={own:'as_own',loan:'as_loan',res:'as_res',p1:'as_p1',p2:'as_p2'};
@@ -1422,7 +1497,7 @@ function fbSave(){
   if(!fbRef||fbApplying)return;
   clearTimeout(fbTimer);
   fbTimer=setTimeout(()=>{
-    fbRef.set({dates:S.dates,fills:S.fills,batches:S.batches||[],trades:S.trades||[],tradesSeeded:!!S.tradesSeeded,assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v4:S.rebuy0626v4||false,t:Date.now()},{merge:true})
+    fbRef.set({dates:S.dates,fills:S.fills,batches:S.batches||[],trades:S.trades||[],tradesSeeded:!!S.tradesSeeded,pos:S.pos||[],assets:S.assets||{},fund:gv('fund'),fx:gv('fx'),rebuy0626v4:S.rebuy0626v4||false,t:Date.now()},{merge:true})
       .then(()=>setSync('☁ 已同步 · '+(firebase.auth().currentUser.email||''),true))
       .catch(()=>setSync('⚠ 同步失敗，點此重試',false));
   },600);
