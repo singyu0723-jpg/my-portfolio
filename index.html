@@ -791,14 +791,14 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
         '<div class="glbar"><i style="width:'+w.toFixed(1)+'%;background:'+(ok?'var(--up)':'var(--accent)')+'"></i></div>'+
         '<div class="gls">'+T(tPg,'<span style="color:'+(ok?'var(--up)':(pnl<0?'var(--dn)':'inherit'))+'">'+(ok?'已達標 '+pg.toFixed(0)+'%，超出 $'+f0(pnl-yi):(pnl<0?'目前虧損，進度 0%，還差 $'+f0(yi-pnl):'進度 '+pg.toFixed(0)+'%，還差 $'+f0(yi-pnl)))+'</span>')+'<span class="mut">損益 '+sgn(pnl)+' ÷ '+T(tBase,'投入 $'+fmtW(base))+'</span></div></div>';};
     const hasLt=lt&&lt.inv>0;const PP=window.PNLPARTS||{};
-    const Dall={what:'含個股：今年操作以來的全部績效。\n損益 ＝ 長期投資未實現 ＋ 個股持有中未實現 ＋ 個股已實現（含 7/17 撥款前的 5–6 月交易）。\n投入 ＝ ②長期真實投入 ＋ 📒 個股持有成本。',
+    const Dall={what:'總損益：今年操作以來的全部績效（＝ 📒 頂部的總損益）。\n損益 ＝ 長期投資未實現 ＋ 個股持有中未實現 ＋ 個股已實現（含 7/17 撥款前的 5–6 月交易）。\n投入 ＝ ②長期真實投入 ＋ 📒 個股持有成本。',
       pnl:'損益 ＝ 長期未實現 '+sgn(PP.lt||0)+' ＋ 個股持有中未實現 '+sgn(PP.unr||0)+' ＋ 個股已實現 '+sgn(PP.real||0)+'（＝ 📒 總損益）',
       base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（不含換倉虧損）＋ 📒 個股持有成本 $'+f0(pc0)+' ＝ $'+f0((hasLt?lt.inv:0)+pc0)};
     const Dlt={what:'只算長期：只看評估工具②的 QQQ／VOO／GOOGL／2330／0050 長期部位。\n損益 ＝ ②未實現損益（成本已含舊帳戶換倉虧損）。\n投入 ＝ ②真實買入成本（不含換倉虧損），與下方「以長期投入計」同一個數。',
       pnl:'損益 ＝ ②長期投資未實現 '+sgn(hasLt?lt.pnl:0)+'（市值 $'+f0(hasLt?lt.val:0)+' − 成本 $'+f0(hasLt?lt.cost:0)+'，成本含換倉虧損）',
       base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（各批買入價 × 股數，不含換倉虧損）'};
     cov='<div class="pnlcell" style="flex:2.4;min-width:290px;border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">'+T('第 '+(yrNow+1)+' 年（'+R[yrNow*12].y+'/'+R[yrNow*12].m+'–'+R[yrNow*12+11].y+'/'+R[yrNow*12+11].m+'）12 期利息合計 $'+f0(yi)+'。\n投資賺到的錢要超過這個數，這一年借錢才划算。','今年要打贏的利息 $'+f0(yi)+'（第 '+(yrNow+1)+' 年）')+'</span>'+
-      row('含個股',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'評估工具抓價後顯示',Dall)+
+      row('總損益',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'評估工具抓價後顯示',Dall)+
       row('只算長期',hasLt?lt.pnl:null,hasLt?lt.inv:0,'評估工具抓價後顯示',Dlt)+'</div>';}
   top.innerHTML='<div class="chips">'+
    '<div class="chip"><div class="l">貸款本金</div><div class="v">$'+f0(LOAN.P)+'</div><div class="s">台新 信貸本利攤指數 · 手續費 $'+f0(LOAN.fee)+'</div></div>'+
@@ -809,7 +809,7 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
    '<div class="pnlcell" style="min-width:200px"><span class="pl">貸款進度</span><b>'+np+' / '+LOAN.n+' 期</b><span class="mut" style="font-size:11px;font-weight:700;line-height:1.7">'+(next?'下期 '+dstr(next.t)+' $'+f0(next.pay):'已繳清')+'<br>剩餘本金 $'+f0(bal)+'<br>已還本金 $'+f0(paidP)+'</span></div>'+cov+
   '</div></div>';
   const inv=(window.LTP&&LTP.inv>0)?LTP.inv:null;const thr=document.getElementById('loan_thr');
-  let h='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>當年利息</th><th>以 200 萬計</th><th>以長期投入計'+(inv?'<br><span class="mut" style="font-weight:700">$'+fmtW(inv)+'</span>':'')+'</th></tr>';
+  let h='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>當年利息</th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 2,000,000。把整筆貸款都當成投入。第 1 年不到 3%，是因為本息平均攤還下本金逐月減少（第 1 期以 200 萬計息、第 12 期只剩 183 萬），全年平均約 192 萬在付 3%。">以 200 萬計</span></th><th><span class="tip" tabindex="0" data-tip="當年利息 ÷ 評估工具②目前真實買入成本（不含換倉虧損）。這才是你實際投入的錢要做到的報酬率，隨持倉即時變動。">以長期投入計</span>'+(inv?'<br><span class="mut" style="font-weight:700">$'+fmtW(inv)+'</span>':'')+'</th></tr>';
   for(let y=0;y<10;y++){const seg=R.slice(y*12,y*12+12);const yi=yI(y);const cur=y===yrNow;
     h+='<tr'+(cur?' style="background:var(--chip);font-weight:900"':'')+'><td style="white-space:nowrap">第'+(y+1)+'年'+(cur?' <span class="mut" style="font-size:10.5px">← 現在</span>':'')+'</td><td class="mut" style="white-space:nowrap">'+seg[0].y+'/'+seg[0].m+'–'+seg[11].y+'/'+seg[11].m+'</td><td class="b">$'+f0(yi)+'</td><td class="b" style="color:var(--accent)">'+(yi/LOAN.P*100).toFixed(2)+'%</td><td class="b" style="color:var(--accent)">'+(inv?(yi/inv*100).toFixed(2)+'%':'—')+'</td></tr>';}
   h+='<tr style="border-top:2px solid var(--line);font-weight:900"><td>10 年合計</td><td class="mut">年均</td><td class="b">$'+f0(totI)+'</td><td class="b">'+(totI/LOAN.P*10).toFixed(2)+'% / 年</td><td class="b">'+(inv?(totI/inv*10).toFixed(2)+'% / 年':'—')+'</td></tr></table></div>';
