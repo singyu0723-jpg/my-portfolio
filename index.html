@@ -142,6 +142,7 @@ li.warn:before{background:var(--up)}
 .tip:hover::after,.tip:focus::after,.tip:active::after{opacity:1}
 /* 懸浮提示改由 JS 定位（#tipbox），自動夾在視窗內，不再被邊界吃掉 */
 .tip::after{display:none !important}
+#tipbox{white-space:pre-line!important}
 #tipbox{position:fixed;z-index:999;background:var(--ink);color:#fffdf8;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;max-width:min(92vw,440px);white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 @media(max-width:680px){
   /* 手機：持倉表每格改兩行（總額／價格），五欄塞得進 402px 不用橫向捲 */
@@ -779,15 +780,26 @@ function renderLoan(){const top=document.getElementById('loan_top');if(!top)retu
   const yI=y=>R.slice(y*12,y*12+12).reduce((s,r)=>s+r.i,0);
   /* 今年目標 vs 目前績效：同一筆利息，兩種口徑（含個股／只算長期），各自用自己的投入成本當分母 */
   let cov='';{const yi=yI(yrNow);const lt=window.LTP||null;const tp=window.TOTPNL;const pc0=window.POSCOST||0;
-    const row=(name,pnl,base,hint)=>{if(!(base>0)||typeof pnl!=='number')return '<div class="gl"><div class="glh"><span class="gln">'+name+'</span><span class="mut">'+hint+'</span></div></div>';
+    const sgn=v=>(v>=0?'+':'−')+'$'+f0(Math.abs(v));const T=(t,h)=>'<span class="tip" tabindex="0" data-tip="'+t.replace(/"/g,'&quot;')+'">'+h+'</span>';
+    const row=(name,pnl,base,hint,D)=>{if(!(base>0)||typeof pnl!=='number')return '<div class="gl"><div class="glh"><span class="gln">'+name+'</span><span class="mut">'+hint+'</span></div></div>';
       const tg=yi/base*100,cu=pnl/base*100,pg=yi>0?pnl/yi*100:0,ok=pnl>=yi,w=Math.max(0,Math.min(100,pg));
-      return '<div class="gl"><div class="glh"><span class="gln">'+name+'</span><span class="mut">目標 <b style="color:var(--accent)">'+tg.toFixed(2)+'%</b></span><span class="mut">目前 <b style="color:'+(cu>=0?'var(--up)':'var(--dn)')+'">'+(cu>=0?'+':'−')+Math.abs(cu).toFixed(2)+'%</b></span></div>'+
+      const tTg='目標 ＝ 今年利息 $'+f0(yi)+' ÷ 投入 $'+f0(base)+' ＝ '+tg.toFixed(2)+'%\n這筆錢今年至少要賺到這個趴數，才剛好打平第 '+(yrNow+1)+' 年的利息。';
+      const tCu='目前 ＝ 損益 '+sgn(pnl)+' ÷ 投入 $'+f0(base)+' ＝ '+(cu>=0?'+':'−')+Math.abs(cu).toFixed(2)+'%\n'+D.pnl;
+      const tPg='進度 ＝ 損益 '+sgn(pnl)+' ÷ 今年利息 $'+f0(yi)+' ＝ '+Math.max(0,pg).toFixed(0)+'%\n'+(ok?'超出 ＝ 損益 − 利息 ＝ $'+f0(pnl-yi):'還差 ＝ 利息 − 損益 ＝ $'+f0(yi-pnl))+'\n（累計到今天的損益直接比全年利息，不年化）';
+      const tBase='投入 ＝ '+D.base;
+      return '<div class="gl"><div class="glh">'+T(D.what,'<span class="gln">'+name+'</span>')+'<span class="mut">'+T(tTg,'目標 <b style="color:var(--accent)">'+tg.toFixed(2)+'%</b>')+'</span><span class="mut">'+T(tCu,'目前 <b style="color:'+(cu>=0?'var(--up)':'var(--dn)')+'">'+(cu>=0?'+':'−')+Math.abs(cu).toFixed(2)+'%</b>')+'</span></div>'+
         '<div class="glbar"><i style="width:'+w.toFixed(1)+'%;background:'+(ok?'var(--up)':'var(--accent)')+'"></i></div>'+
-        '<div class="gls"><span style="color:'+(ok?'var(--up)':(pnl<0?'var(--dn)':'inherit'))+'">'+(ok?'已達標 '+pg.toFixed(0)+'%，超出 $'+f0(pnl-yi):(pnl<0?'目前虧損，進度 0%，還差 $'+f0(yi-pnl):'進度 '+pg.toFixed(0)+'%，還差 $'+f0(yi-pnl)))+'</span><span class="mut">損益 '+(pnl>=0?'+':'−')+'$'+f0(Math.abs(pnl))+' ÷ 投入 $'+fmtW(base)+'</span></div></div>';};
-    const hasLt=lt&&lt.inv>0;
-    cov='<div class="pnlcell" style="flex:2.4;min-width:290px;border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">今年要打贏的利息 $'+f0(yi)+'（第 '+(yrNow+1)+' 年）</span>'+
-      row('含個股',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'評估工具抓價後顯示')+
-      row('只算長期',hasLt?lt.pnl:null,hasLt?lt.inv:0,'評估工具抓價後顯示')+'</div>';}
+        '<div class="gls">'+T(tPg,'<span style="color:'+(ok?'var(--up)':(pnl<0?'var(--dn)':'inherit'))+'">'+(ok?'已達標 '+pg.toFixed(0)+'%，超出 $'+f0(pnl-yi):(pnl<0?'目前虧損，進度 0%，還差 $'+f0(yi-pnl):'進度 '+pg.toFixed(0)+'%，還差 $'+f0(yi-pnl)))+'</span>')+'<span class="mut">損益 '+sgn(pnl)+' ÷ '+T(tBase,'投入 $'+fmtW(base))+'</span></div></div>';};
+    const hasLt=lt&&lt.inv>0;const PP=window.PNLPARTS||{};
+    const Dall={what:'含個股：今年操作以來的全部績效。\n損益 ＝ 長期投資未實現 ＋ 個股持有中未實現 ＋ 個股已實現（含 7/17 撥款前的 5–6 月交易）。\n投入 ＝ ②長期真實投入 ＋ 📒 個股持有成本。',
+      pnl:'損益 ＝ 長期未實現 '+sgn(PP.lt||0)+' ＋ 個股持有中未實現 '+sgn(PP.unr||0)+' ＋ 個股已實現 '+sgn(PP.real||0)+'（＝ 📒 總損益）',
+      base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（不含換倉虧損）＋ 📒 個股持有成本 $'+f0(pc0)+' ＝ $'+f0((hasLt?lt.inv:0)+pc0)};
+    const Dlt={what:'只算長期：只看評估工具②的 QQQ／VOO／GOOGL／2330／0050 長期部位。\n損益 ＝ ②未實現損益（成本已含舊帳戶換倉虧損）。\n投入 ＝ ②真實買入成本（不含換倉虧損），與下方「以長期投入計」同一個數。',
+      pnl:'損益 ＝ ②長期投資未實現 '+sgn(hasLt?lt.pnl:0)+'（市值 $'+f0(hasLt?lt.val:0)+' − 成本 $'+f0(hasLt?lt.cost:0)+'，成本含換倉虧損）',
+      base:'②長期真實投入 $'+f0(hasLt?lt.inv:0)+'（各批買入價 × 股數，不含換倉虧損）'};
+    cov='<div class="pnlcell" style="flex:2.4;min-width:290px;border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">'+T('第 '+(yrNow+1)+' 年（'+R[yrNow*12].y+'/'+R[yrNow*12].m+'–'+R[yrNow*12+11].y+'/'+R[yrNow*12+11].m+'）12 期利息合計 $'+f0(yi)+'。\n投資賺到的錢要超過這個數，這一年借錢才划算。','今年要打贏的利息 $'+f0(yi)+'（第 '+(yrNow+1)+' 年）')+'</span>'+
+      row('含個股',hasLt&&typeof tp==='number'?tp:null,hasLt?lt.inv+pc0:0,'評估工具抓價後顯示',Dall)+
+      row('只算長期',hasLt?lt.pnl:null,hasLt?lt.inv:0,'評估工具抓價後顯示',Dlt)+'</div>';}
   top.innerHTML='<div class="chips">'+
    '<div class="chip"><div class="l">貸款本金</div><div class="v">$'+f0(LOAN.P)+'</div><div class="s">台新 信貸本利攤指數 · 手續費 $'+f0(LOAN.fee)+'</div></div>'+
    '<div class="chip"><div class="l">年利率</div><div class="v">'+(LOAN.r*100).toFixed(2)+'%</div><div class="s">指數型浮動 · 總費用年百分率 3.09%</div></div>'+
@@ -910,7 +922,7 @@ function renderTrades(){
   const sg=v=>(v>=0?'+':'−')+'$'+f0(Math.abs(v));const cl=v=>v>=0?'var(--up)':'var(--dn)';
   /* 持有中 */
   let unr=0,unrN=0,posCost=0,posVal=0;S.pos.forEach(o=>{const u=posUnreal(o);const mult=o.m==='us'?(gv('fx')||32):1;posCost+=(o.p||0)*(o.q||0)*mult;if(u!=null){unr+=u;unrN++;posVal+=posPrice(o)*o.q*mult;}});
-  const tot=real+ltp+unr;window.TOTPNL=tot;window.POSCOST=posCost;
+  const tot=real+ltp+unr;window.TOTPNL=tot;window.POSCOST=posCost;window.PNLPARTS={lt:ltp,unr:unr,real:real};
   top.innerHTML='<div class="pnlcard" style="margin-top:6px"><div class="pnlnums">'+
     '<div class="pnlcell"><span class="pl">長期投資（未實現）</span><b style="color:'+(lt?cl(ltp):'var(--mut)')+'">'+(lt?sg(ltp):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(lt?('市值 $'+f0(lt.val)+' · 成本 $'+f0(lt.cost)+' · '+(lt.cost>0?((ltp>=0?'+':'')+(ltp/lt.cost*100).toFixed(1)+'%'):'')):'評估工具抓價後顯示')+'</span></div>'+
     '<div class="pnlcell"><span class="pl">個股持有中（未實現）</span><b style="color:'+(S.pos.length?cl(unr):'var(--mut)')+'">'+(S.pos.length?sg(unr):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(S.pos.length?(unrN+'/'+S.pos.length+' 檔有報價 · 成本 $'+f0(posCost)+(posCost>0&&unrN?' · '+(unr>=0?'+':'')+(unr/posCost*100).toFixed(1)+'%':'')):'尚無持有中個股')+'</span></div>'+
