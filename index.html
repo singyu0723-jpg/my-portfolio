@@ -536,9 +536,9 @@ th,td{padding:6px 4px;font-size:12px}
   <h2 class="sect"><span class="num">📈</span>持有中（未實現）<button class="resetbtn sbtn" onclick="togglePosForm()">＋ 新增持股</button></h2>
   <div id="pos_form" style="display:none;margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px">
     <div class="tgrid">
-      <label>市場<select id="po_m"><option value="tw">台股</option><option value="us">美股</option></select></label>
-      <label>代號<input type="text" id="po_c" placeholder="台股填 3665；美股填 NVDA"></label>
-      <label>名稱（選填）<input type="text" id="po_s" placeholder="貿聯-KY"></label>
+      <label>市場<select id="po_m" onchange="poLookup()"><option value="tw">台股</option><option value="us">美股</option></select></label>
+      <label>代號<input type="text" id="po_c" placeholder="台股填 3665；美股填 NVDA" oninput="poLookup()" onchange="poLookup()"><span id="po_hint" class="blsub" style="margin:0;min-height:14px"></span></label>
+      <label>名稱（自動帶入，可改）<input type="text" id="po_s" placeholder="輸入代號後自動查"></label>
       <label>買入日<input type="date" id="po_d"></label>
       <label>股數<input type="number" id="po_q" step="any" min="0" placeholder="25"></label>
       <label>買入均價<input type="number" id="po_p" step="any" min="0" placeholder="每股成交價"></label>
@@ -778,14 +778,22 @@ async function fetchPosPx(){
   try{const tw=S.pos.filter(o=>o.m!=='us').map(o=>String(o.c).trim());const us=S.pos.filter(o=>o.m==='us').map(o=>String(o.c).trim().toUpperCase());
     const uniq=a=>a.filter((v,i)=>a.indexOf(v)===i);
     const jobs=[];
-    if(tw.length)jobs.push(twMis(uniq(tw)).then(r=>{if(r)Object.keys(r).forEach(c=>{POSPX['TW:'+c.toUpperCase()]={price:r[c],sess:'即時',t:Date.now()};});
+    if(tw.length)jobs.push(twMis(uniq(tw)).then(r=>{if(r)Object.keys(r).forEach(c=>{POSPX['TW:'+c.toUpperCase()]={price:r[c],sess:'即時',t:Date.now(),name:(window.TWNAME||{})[c]||''};});
       /* MIS 抓不到的（上櫃、ETF 等）退 Yahoo */
       return Promise.all(uniq(tw).filter(c=>!(r&&isFinite(r[c]))).map(c=>yget(c+'.TW').then(y=>{if(y)POSPX['TW:'+c.toUpperCase()]={price:y.price,sess:y.sess||'',t:Date.now()};})));}));
-    uniq(us).forEach(sym=>jobs.push(yget(sym).then(y=>{if(y)POSPX['US:'+sym]={price:y.price,sess:y.sess||'',t:Date.now()};})));
+    uniq(us).forEach(sym=>jobs.push(yget(sym).then(y=>{if(y)POSPX['US:'+sym]={price:y.price,sess:y.sess||'',t:Date.now(),name:y.name||''};})));
     await Promise.all(jobs);
     try{localStorage.setItem('erick_pospx_v1',JSON.stringify(POSPX));}catch(e){}
   }finally{posBusy=false;renderTrades();}
 }
+function posName(o){return o.s||((POSPX[posKey(o)]||{}).name)||'';}
+let poLookT=null;
+function poLookup(){clearTimeout(poLookT);poLookT=setTimeout(async()=>{
+  const g=id=>document.getElementById(id);const m=g('po_m').value,c=(g('po_c').value||'').trim();const h=g('po_hint');if(!c){if(h)h.textContent='';return;}
+  if(h)h.textContent='查詢中…';
+  try{if(m==='us'){const y=await yget(c.toUpperCase());if(y){if(!g('po_s').value&&y.name)g('po_s').value=y.name;if(h)h.textContent='現價 US$'+(+y.price.toFixed(2)).toLocaleString()+(y.sess?'（'+y.sess+'）':'');}else if(h)h.textContent='找不到這個代號';}
+    else{const r=await twMis([c]);const px=r&&r[c];const nm=(window.TWNAME||{})[c];if(nm&&!g('po_s').value)g('po_s').value=nm;if(h)h.textContent=px?('現價 $'+(+px).toLocaleString()+(nm?'　'+nm:'')):'找不到這個代號（上市／上櫃皆無）';}}
+  catch(e){if(h)h.textContent='查詢失敗';}},500);}
 function togglePosForm(){const f=document.getElementById('pos_form');if(!f)return;const on=f.style.display==='none';f.style.display=on?'':'none';if(on){const d=document.getElementById('po_d');if(d&&!d.value)d.value=todayStr();}}
 function addPos(){
   const g=id=>document.getElementById(id);const m=g('po_m').value,c=(g('po_c').value||'').trim(),nm=(g('po_s').value||'').trim();
@@ -794,14 +802,14 @@ function addPos(){
   S.pos.push({d:g('po_d').value||todayStr(),m:m,c:m==='us'?c.toUpperCase():c,s:nm,q:q,p:p,n:(g('po_n').value||'').trim()});
   save();['po_c','po_s','po_q','po_p','po_n'].forEach(id=>g(id).value='');togglePosForm();renderTrades();fetchPosPx();
 }
-function delPos(i){const o=S.pos[i];if(!o)return;if(!confirm('刪除持股 '+(o.s||o.c)+'？（不會寫入交易紀錄）'))return;S.pos.splice(i,1);save();renderTrades();}
+function delPos(i){const o=S.pos[i];if(!o)return;if(!confirm('刪除持股 '+(posName(o)||o.c)+'？（不會寫入交易紀錄）'))return;S.pos.splice(i,1);save();renderTrades();}
 function closePos(i){
   const o=S.pos[i];if(!o)return;const us=o.m==='us';const px=posPrice(o);
-  const sp=prompt((o.s||o.c)+' 平倉：請填「賣出總額」（帳面收入，扣費用後）'+(us?'，美元':'，台幣'),px?String(Math.round(px*o.q*100)/100):'');if(sp===null)return;
+  const sp=prompt((posName(o)||o.c)+' 平倉：請填「賣出總額」（帳面收入，扣費用後）'+(us?'，美元':'，台幣'),px?String(Math.round(px*o.q*100)/100):'');if(sp===null)return;
   const a=parseFloat(sp);if(!isFinite(a)||a<=0){alert('賣出總額要是數字');return;}
   const bp=prompt('買入總額（投資成本，含費用）',String(Math.round(o.p*o.q*100)/100));if(bp===null)return;
   const b=parseFloat(bp)||Math.round(o.p*o.q*100)/100;
-  S.trades.push({d:todayStr(),m:o.m,s:(o.s?o.s+' ':'')+o.c,q:o.q,b:b,a:a,p:null,fx:us?(gv('fx')||32):1,n:(o.n?o.n+'；':'')+'由持有中平倉（買 '+o.d+'）'});
+  S.trades.push({d:todayStr(),m:o.m,s:(posName(o)?posName(o)+' ':'')+o.c,q:o.q,b:b,a:a,p:null,fx:us?(gv('fx')||32):1,n:(o.n?o.n+'；':'')+'由持有中平倉（買 '+o.d+'）'});
   S.pos.splice(i,1);save();renderTrades();
 }
 function trTWD(t){return trPL(t)*(t.m==='us'?(t.fx||gv('fx')||32):1);}
@@ -835,7 +843,7 @@ function renderTrades(){
     '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股未實現 ＋ 個股已實現</span></div></div></div>';
   const pb=document.getElementById('pos_body');
   if(pb){pb.innerHTML=S.pos.map((o,i)=>{const us=o.m==='us';const cur=us?'US$':'$';const px=posPrice(o);const r=POSPX[posKey(o)];const mult=us?(gv('fx')||32):1;const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(px!=null&&o.p>0)?((px/o.p-1)*100):null;
-      return '<tr><td class="b" style="text-align:left">'+(o.s?o.s+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span><div class="sub" style="font-size:10.5px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</div></td>'+
+      const nm=posName(o);return '<tr><td class="b" style="text-align:left">'+(nm?nm+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span><div class="sub" style="font-size:10.5px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</div></td>'+
         '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td>'+
         '<td>'+(px!=null?(cur+(+px.toFixed(2)).toLocaleString()+(r&&r.sess?'<span class="sub il" style="margin-left:3px">'+r.sess+'</span>':'')):'<span class="mut">抓取中</span>')+'</td>'+
         '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
@@ -1165,16 +1173,17 @@ async function yget(sym){
       else if((ms==='PRE'||ms==='PREPRE')&&isFinite(pre)){price=pre;sess='盤前';}
       let highs=[];try{highs=r.indicators.quote[0].high.filter(x=>x!=null);}catch(e){}
       const hi=highs.length?Math.max.apply(null,highs.concat([price||0])):price;
-      if(isFinite(price))return{price:price,high:hi,sess:sess};
+      if(isFinite(price))return{price:price,high:hi,sess:sess,name:m.shortName||m.longName||''};
     }catch(e){}
   }
   return null;
 }
 /* 從 MIS 一筆挑出最貼近現價的價：最新成交 z 優先；盤中沒撮合(z='-')就用最佳買/賣價中價(b/a 第一檔)；都沒有才退昨收 y。 */
 function misPrice(o){
+  /* 2026-10-06：不再用買賣中價（會出現 147.25、2287.5 這種不在檔位上的價）；沒成交價就用最佳買價（賣得掉的價、一定在檔位上） */
   const z=parseFloat(o.z);if(isFinite(z)&&z>0)return z;
   const bid=parseFloat((o.b||'').split('_')[0]),ask=parseFloat((o.a||'').split('_')[0]);
-  if(isFinite(bid)&&bid>0&&isFinite(ask)&&ask>0)return Math.round((bid+ask)/2*100)/100;
+  if(isFinite(bid)&&bid>0)return bid;
   if(isFinite(ask)&&ask>0)return ask;
   if(isFinite(bid)&&bid>0)return bid;
   const pz=parseFloat(o.pz);if(isFinite(pz)&&pz>0)return pz;
@@ -1185,13 +1194,13 @@ function misPrice(o){
    代理順序：codetabs / corsproxy 優先（較不快取），易快取的 allorigins 殿後，避免拿到舊快照。 */
 const MISPROX=[JINA,'https://api.codetabs.com/v1/proxy/?quest=','https://api.allorigins.win/raw?url='];
 async function twMis(codes){
-  const ch=codes.map(c=>'tse_'+c+'.tw').join('|');
+  const ch=codes.map(c=>'tse_'+c+'.tw|otc_'+c+'.tw').join('|');/* 上市＋上櫃一起問，MIS 只回存在的那個 */
   const url='https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch='+encodeURIComponent(ch)+'&json=1&delay=0&_='+Date.now();
   for(const px of MISPROX){
     try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),7000);
       const res=await pxfetch(px,url,ctrl.signal);clearTimeout(to);
       const j=await res.json();const arr=j&&j.msgArray;if(!arr||!arr.length)continue;
-      const out={};window.TWDBG={};arr.forEach(o=>{const price=misPrice(o);
+      const out={};window.TWDBG={};window.TWNAME=window.TWNAME||{};arr.forEach(o=>{const price=misPrice(o);if(o.n)window.TWNAME[o.c]=o.n;
         window.TWDBG[o.c]={z:o.z,bid:(o.b||'').split('_')[0],ask:(o.a||'').split('_')[0],y:o.y,用:price,時間:o.tlong?new Date(+o.tlong).toLocaleTimeString('zh-TW'):o.t};
         if(price!=null)out[o.c]=price;});
       if(Object.keys(out).length)return out;
