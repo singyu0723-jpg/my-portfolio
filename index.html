@@ -862,7 +862,7 @@ function renderTrades(){
         '<td>'+(px!=null?(cur+(+px.toFixed(2)).toLocaleString()+(r&&r.sess?'<span class="sub il" style="margin-left:3px">'+r.sess+'</span>':'')):'<span class="mut">抓取中</span>')+'</td>'+
         '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
         '<td>'+(val!=null?(cur+f0(val)+(us?'<div class="sub">≈$'+f0(val*mult)+'</div>':'')):'—')+'</td>'+
-        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'+(us?'<div class="sub">'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'</div>':'')):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?((us?'<span class="tip" tabindex="0" data-tip="'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'">'+sg(u)+'</span>':sg(u))+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
         '<td onclick="event.stopPropagation()">'+(multi?'<span class="sub" style="font-size:10.5px">展開操作</span>':'<span class="act"><button onclick="closePos('+o.i+')" title="平倉並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+o.i+')" title="刪除">✕</button></span>')+'</td></tr>';
       if(multi&&open)h+=lots.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||'')).map(x=>lotRow(x,us,cur,mult,px,r)).join('');
       return h;}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
@@ -874,7 +874,7 @@ function renderTrades(){
       '<td class="b" style="text-align:left">'+t.s+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span></td>'+
       '<td>'+(t.q?(+t.q).toLocaleString():'—')+'</td>'+
       '<td>'+(t.b?cur+f0(t.b):'—')+'</td><td>'+(t.a?cur+f0(t.a):'—')+'</td>'+
-      '<td class="b" style="color:'+cl(pl)+'">'+sg(trTWD(t))+(us?'<div class="sub">'+(pl>=0?'+':'−')+'US$'+Math.abs(pl).toFixed(2)+'</div>':'')+'</td>'+
+      '<td class="b" style="color:'+cl(pl)+'">'+(us?'<span class="tip" tabindex="0" data-tip="'+(pl>=0?'+':'−')+'US$'+Math.abs(pl).toFixed(2)+'">'+sg(trTWD(t))+'</span>':sg(trTWD(t)))+'</td>'+
       '<td class="b" style="color:'+cl(pl)+'">'+(rr==null?'—':((rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%'))+'</td>'+
       '<td class="note" title="'+(t.n||'').replace(/"/g,'&quot;')+'">'+(t.n||'')+'</td>'+
       '<td><button class="del" onclick="delTrade('+t.i+')" title="刪除">✕</button></td></tr>';}).join('')||'<tr><td colspan="9" class="mut">還沒有紀錄，按右上角「＋ 新增一筆」。</td></tr>';}
