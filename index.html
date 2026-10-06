@@ -48,7 +48,7 @@ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Arial,sans-ser
 .tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px}.tgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--mut)}.tgrid input,.tgrid select{width:100%;font-family:inherit;font-size:14px;font-weight:700;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
 .trt td,.trt th{white-space:nowrap}.trt .del{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:12px}.trt .del:hover{color:var(--up);border-color:var(--up)}
 .trt td.note{text-align:left;font-size:11.5px;color:var(--mut);max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.post td,.post th{white-space:nowrap}.post .act{display:inline-flex;gap:4px}.post .act button{background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;font-weight:800;color:var(--accent)}.post .act button.x{color:var(--mut)}
+.post td,.post th{white-space:nowrap}.post tr.lot td{background:rgba(0,0,0,.025);font-size:12.5px;padding-top:5px;padding-bottom:5px;border-bottom:1px dashed var(--line)}.post .act{display:inline-flex;gap:4px}.post .act button{background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;font-weight:800;color:var(--accent)}.post .act button.x{color:var(--mut)}
 @media(max-width:680px){.post th:nth-child(3),.post td:nth-child(3),.post th:nth-child(5),.post td:nth-child(5){display:none}.post td,.post th{padding:7px 4px;font-size:12px}}
 .mkt{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;margin-left:5px;vertical-align:1px}.mkt.tw{background:rgba(189,132,32,.15);color:#8a5e10}.mkt.us{background:rgba(13,148,136,.14);color:#0b6b63}
 @media(max-width:680px){.tgrid{grid-template-columns:1fr 1fr}.trt td.note{display:none}.trt th:nth-child(8),.trt th:nth-child(4),.trt td:nth-child(4),.trt th:nth-child(5),.trt td:nth-child(5){display:none}.trt td,.trt th{padding:7px 4px;font-size:12px}}
@@ -842,14 +842,30 @@ function renderTrades(){
     '<div class="pnlcell"><span class="pl">個股交易（已實現）</span><b style="color:'+cl(real)+'">'+sg(real)+'</b><span class="mut" style="font-size:11px;font-weight:700">台股 '+sg(tw)+' · 美股 '+sg(usTWD)+'（'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'）</span></div>'+
     '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股未實現 ＋ 個股已實現</span></div></div></div>';
   const pb=document.getElementById('pos_body');
-  if(pb){pb.innerHTML=S.pos.map((o,i)=>{const us=o.m==='us';const cur=us?'US$':'$';const px=posPrice(o);const r=POSPX[posKey(o)];const mult=us?(gv('fx')||32):1;const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(px!=null&&o.p>0)?((px/o.p-1)*100):null;
-      const nm=posName(o);return '<tr><td class="b" style="text-align:left">'+(nm?nm+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span><div class="sub" style="font-size:10.5px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</div></td>'+
-        '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td>'+
+  if(pb){
+    /* 同一檔多批買入 → 合併成一列（加權均價、總股數），點 ▸ 展開看各批 */
+    const groups={},order=[];S.pos.forEach((o,i)=>{const k=posKey(o);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(Object.assign({i:i},o));});
+    window.POSOPEN=window.POSOPEN||{};
+    const lotRow=(o,us,cur,mult,px,r)=>{const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(px!=null&&o.p>0)?((px/o.p-1)*100):null;
+      return '<tr class="lot"><td style="text-align:left;padding-left:26px"><span class="sub" style="font-size:11px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</span></td>'+
+        '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td><td></td>'+
+        '<td>'+cur+f0(cost)+'</td><td>'+(px!=null?cur+f0(px*o.q):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
+        '<td><span class="act"><button onclick="closePos('+o.i+')" title="平倉這批並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+o.i+')" title="刪除這批">✕</button></span></td></tr>';};
+    pb.innerHTML=order.map(k=>{const lots=groups[k];const o=lots[0];const us=o.m==='us';const cur=us?'US$':'$';const mult=us?(gv('fx')||32):1;const px=posPrice(o);const r=POSPX[k];
+      const q=lots.reduce((t,x)=>t+(+x.q||0),0),cost=lots.reduce((t,x)=>t+(+x.q||0)*(+x.p||0),0),avg=q>0?cost/q:0;
+      const val=px!=null?px*q:null;const u=val!=null?(val-cost)*mult:null;const rr=(px!=null&&avg>0)?((px/avg-1)*100):null;
+      const open=!!window.POSOPEN[k];const nm=posName(o);const multi=lots.length>1;
+      let h='<tr'+(multi?' style="cursor:pointer" onclick="POSOPEN[\''+k+'\']=!POSOPEN[\''+k+'\'];renderTrades()"':'')+'><td class="b" style="text-align:left">'+(multi?'<span class="caret" style="margin:0 6px 0 0;font-size:13px">'+(open?'▾':'▸')+'</span>':'')+(nm?nm+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span>'+
+        '<div class="sub" style="font-size:10.5px">'+(multi?lots.length+' 批買入 · ':'買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:''))+(multi?'最早 '+lots.map(x=>x.d).sort()[0].slice(5).replace('-','/'):'')+'</div></td>'+
+        '<td>'+q.toLocaleString()+'</td><td>'+cur+(+avg.toFixed(2)).toLocaleString()+(multi?'<div class="sub">加權均價</div>':'')+'</td>'+
         '<td>'+(px!=null?(cur+(+px.toFixed(2)).toLocaleString()+(r&&r.sess?'<span class="sub il" style="margin-left:3px">'+r.sess+'</span>':'')):'<span class="mut">抓取中</span>')+'</td>'+
         '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
-        '<td>'+(px!=null?(cur+f0(px*o.q)+(us?'<div class="sub">≈$'+f0(px*o.q*mult)+'</div>':'')):'—')+'</td>'+
-        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'+(us?'<div class="sub">'+(u>=0?'+':'−')+'US$'+Math.abs((px-o.p)*o.q).toFixed(2)+'</div>':'')):'—')+'</td>'+
-        '<td><span class="act"><button onclick="closePos('+i+')" title="平倉並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+i+')" title="刪除">✕</button></span></td></tr>';}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
+        '<td>'+(val!=null?(cur+f0(val)+(us?'<div class="sub">≈$'+f0(val*mult)+'</div>':'')):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'+(us?'<div class="sub">'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'</div>':'')):'—')+'</td>'+
+        '<td onclick="event.stopPropagation()">'+(multi?'<span class="sub" style="font-size:10.5px">展開操作</span>':'<span class="act"><button onclick="closePos('+o.i+')" title="平倉並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+o.i+')" title="刪除">✕</button></span>')+'</td></tr>';
+      if(multi&&open)h+=lots.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||'')).map(x=>lotRow(x,us,cur,mult,px,r)).join('');
+      return h;}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
   if(sum)sum.innerHTML='<div class="chips" style="margin-top:8px"><div class="chip"><div class="l">台股已實現</div><div class="v" style="color:'+cl(tw)+'">'+sg(tw)+'</div><div class="s">'+S.trades.filter(t=>t.m!=='us').length+' 筆</div></div>'+
     '<div class="chip"><div class="l">美股已實現</div><div class="v" style="color:'+cl(usTWD)+'">'+sg(usTWD)+'</div><div class="s">'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+' · '+S.trades.filter(t=>t.m==='us').length+' 筆</div></div>'+
     '<div class="chip"><div class="l">勝率</div><div class="v">'+(n?Math.round(win/n*100):0)+'%</div><div class="s">'+win+' 賺 / '+(n-win)+' 賠 · 共 '+n+' 筆</div></div></div>';
