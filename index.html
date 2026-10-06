@@ -283,6 +283,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div class="tab" id="tab-assets" onclick="showView('assets')">💰 資產配置</div>
   <div class="tab" id="tab-returns" onclick="showView('returns')">📊 報酬回測</div>
   <div class="tab" id="tab-trades" onclick="showView('trades')">📒 個股交易</div>
+  <div class="tab" id="tab-loan" onclick="showView('loan')">💳 信貸</div>
   <span class="mktctrl" id="mktctrl"><span class="mkstatus" id="mkstatus">載入中…</span><button class="btn mkrefresh" onclick="fetchMkt()">↻ 重新抓價</button></span>
 </div>
 
@@ -524,6 +525,27 @@ th,td{padding:6px 4px;font-size:12px}
 
 </div>
 
+<div id="view-loan" style="display:none">
+
+<section class="slide">
+  <h2 class="sect"><span class="num">💳</span>信貸總覽<span class="hint" style="margin-left:auto">台新 本利攤指數型 · 撥款 2026/7/17</span></h2>
+  <div id="loan_top"></div>
+</section>
+
+<section class="slide">
+  <h2 class="sect"><span class="num">🎯</span>打贏利息要做到的績效</h2>
+  <div id="loan_thr"></div>
+  <div class="note" style="border:none;padding-top:4px">門檻＝當年利息 ÷ 投入本金。「以 200 萬計」＝整筆貸款都投入；「以長期投入計」＝評估工具②目前真實買入成本（不含換倉虧損），隨持倉即時變動。手續費 $9,000 未攤入年度門檻。</div>
+</section>
+
+<section class="slide">
+  <h2 class="sect"><span class="num">📅</span>攤還明細（每年 8 月 → 隔年 7 月）</h2>
+  <div id="loan_sched"></div>
+  <div class="note" style="border:none;padding-top:4px">依台新攤還試算表的算法重算：利息＝剩餘本金 × 3% × 實際天數 ÷ 365，月付 $19,312 固定，末期補足本金；前 36 期與銀行試算表逐筆一致。利率為指數型浮動，若台新三個月期定儲指數調整，月付金與利息會變。點年度列可展開每月明細。</div>
+</section>
+
+</div>
+
 <div id="view-trades" style="display:none">
 
 <section class="slide">
@@ -583,12 +605,13 @@ th,td{padding:6px 4px;font-size:12px}
 <script>
 const f0=n=>isFinite(n)?Math.round(n).toLocaleString():'—';
 function showView(v){
-  ['tool','assets','returns','trades'].forEach(k=>{
+  ['tool','assets','returns','trades','loan'].forEach(k=>{
     document.getElementById('view-'+k).style.display=v===k?'':'none';
     document.getElementById('tab-'+k).className='tab'+(v===k?' on':'');
   });
   if(v==='assets')recalcAssets();
   if(v==='trades')renderTrades();
+  if(v==='loan')renderLoan();
 }
 /* ───────── ① 配置（定稿：QQQ30 VOO25 GOOGL20 2330·15 0050·10，不含現金） ───────── */
 const ASSETS=[['qqq','QQQ','#0d9488','us',30],['voo','VOO','#3a8f6f','us',25],['googl','GOOGL','#14b8a6','us',20],
@@ -733,6 +756,44 @@ try{const sv=JSON.parse(localStorage.getItem(LSKEY));
 migrateDates();
 if(migrateRebuy()){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
 syncPlan();
+/* ───────── 💳 信貸（台新 2,000,000 / 3.00% 指數型 / 120 期 本息平均；算法對齊銀行試算表） ───────── */
+const LOAN={P:2000000,r:0.03,pay:19312,n:120,y0:2026,m0:7,d0:17,fee:9000};
+function loanSched(){const R=[];let bal=LOAN.P,prev=Date.UTC(LOAN.y0,LOAN.m0-1,LOAN.d0);
+  for(let k=1;k<=LOAN.n;k++){const mi=LOAN.m0-1+k;const y=LOAN.y0+Math.floor(mi/12),m=mi%12;const d=Date.UTC(y,m,LOAN.d0);const days=Math.round((d-prev)/864e5);
+    const i=Math.round(bal*LOAN.r*days/365);let p=LOAN.pay-i;if(k===LOAN.n)p=bal;bal-=p;R.push({k:k,t:d,y:y,m:m+1,days:days,pay:p+i,p:p,i:i,bal:bal});prev=d;}
+  return R;}
+window.LOANOPEN=window.LOANOPEN||{};
+function toggleLoanYr(y){LOANOPEN[y]=!LOANOPEN[y];renderLoan();}
+function renderLoan(){const top=document.getElementById('loan_top');if(!top)return;
+  const R=loanSched();const now=Date.now();const paid=R.filter(r=>r.t<=now);const np=paid.length;
+  const paidI=paid.reduce((s,r)=>s+r.i,0),paidP=paid.reduce((s,r)=>s+r.p,0);const bal=np?paid[np-1].bal:LOAN.P;
+  const totI=R.reduce((s,r)=>s+r.i,0);const next=R[np];const yrNow=Math.min(9,Math.floor(np/12));
+  const dstr=t=>{const d=new Date(t);return d.getUTCFullYear()+'/'+(d.getUTCMonth()+1)+'/'+d.getUTCDate();};
+  const yI=y=>R.slice(y*12,y*12+12).reduce((s,r)=>s+r.i,0);
+  let cov='';{const tp=window.TOTPNL;if(typeof tp==='number'){const yi=yI(yrNow);const pc=yi>0?tp/yi*100:0;
+    cov='<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">目前總損益 vs 第 '+(yrNow+1)+' 年利息</span><b style="color:'+(tp>=yi?'var(--up)':'var(--dn)')+'">'+(tp>=0?'+':'−')+'$'+f0(Math.abs(tp))+' / $'+f0(yi)+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(tp>=yi?'已打贏本年度利息（'+pc.toFixed(0)+'%）':(tp<0?'目前虧損':'已覆蓋 '+pc.toFixed(0)+'%')+'，還差 $'+f0(yi-tp))+'</span></div>';}}
+  top.innerHTML='<div class="chips">'+
+   '<div class="chip"><div class="l">貸款本金</div><div class="v">$'+f0(LOAN.P)+'</div><div class="s">台新 信貸本利攤指數 · 手續費 $'+f0(LOAN.fee)+'</div></div>'+
+   '<div class="chip"><div class="l">年利率</div><div class="v">'+(LOAN.r*100).toFixed(2)+'%</div><div class="s">指數型浮動 · 總費用年百分率 3.09%</div></div>'+
+   '<div class="chip"><div class="l">月付金</div><div class="v">$'+f0(LOAN.pay)+'</div><div class="s">每月 17 日自動扣繳 · 120 期</div></div>'+
+   '<div class="chip"><div class="l">10 年總利息</div><div class="v" style="color:var(--dn)">$'+f0(totI)+'</div><div class="s">含手續費 $'+f0(totI+LOAN.fee)+' · 2026/8/17 → 2036/7/17</div></div>'+
+  '</div><div class="pnlcard" style="margin-top:10px"><div class="pnlnums">'+
+   '<div class="pnlcell"><span class="pl">已繳期數</span><b>'+np+' / '+LOAN.n+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(next?'下期 '+dstr(next.t)+' $'+f0(next.pay):'已繳清')+'</span></div>'+
+   '<div class="pnlcell"><span class="pl">已付利息</span><b style="color:var(--dn)">$'+f0(paidI)+'</b><span class="mut" style="font-size:11px;font-weight:700">已還本金 $'+f0(paidP)+'</span></div>'+
+   '<div class="pnlcell"><span class="pl">剩餘本金</span><b>$'+f0(bal)+'</b><span class="mut" style="font-size:11px;font-weight:700">尚餘利息 $'+f0(totI-paidI)+'</span></div>'+cov+
+  '</div></div>';
+  const inv=(window.LTP&&LTP.inv>0)?LTP.inv:null;const thr=document.getElementById('loan_thr');
+  let h='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>當年利息</th><th>以 200 萬計</th><th>以長期投入計'+(inv?'<br><span class="mut" style="font-weight:700">$'+fmtW(inv)+'</span>':'')+'</th></tr>';
+  for(let y=0;y<10;y++){const seg=R.slice(y*12,y*12+12);const yi=yI(y);const cur=y===yrNow;
+    h+='<tr'+(cur?' style="background:var(--chip);font-weight:900"':'')+'><td style="white-space:nowrap">第'+(y+1)+'年'+(cur?' <span class="mut" style="font-size:10.5px">← 現在</span>':'')+'</td><td class="mut" style="white-space:nowrap">'+seg[0].y+'/'+seg[0].m+'–'+seg[11].y+'/'+seg[11].m+'</td><td class="b">$'+f0(yi)+'</td><td class="b" style="color:var(--accent)">'+(yi/LOAN.P*100).toFixed(2)+'%</td><td class="b" style="color:var(--accent)">'+(inv?(yi/inv*100).toFixed(2)+'%':'—')+'</td></tr>';}
+  h+='<tr style="border-top:2px solid var(--line);font-weight:900"><td>10 年合計</td><td class="mut">年均</td><td class="b">$'+f0(totI)+'</td><td class="b">'+(totI/LOAN.P*10).toFixed(2)+'% / 年</td><td class="b">'+(inv?(totI/inv*10).toFixed(2)+'% / 年':'—')+'</td></tr></table></div>';
+  if(thr)thr.innerHTML=h;
+  const sc=document.getElementById('loan_sched');let s='<div class="twrap"><table class="ctr"><tr><th>年度</th><th>期間</th><th>繳款總額</th><th>其中利息</th><th>其中本金</th><th>年底剩餘本金</th></tr>';
+  for(let y=0;y<10;y++){const seg=R.slice(y*12,y*12+12);const o=!!LOANOPEN[y];const tp=seg.reduce((a,r)=>a+r.pay,0),ti=yI(y),tpr=seg.reduce((a,r)=>a+r.p,0);
+    s+='<tr style="cursor:pointer" onclick="toggleLoanYr('+y+')"><td style="white-space:nowrap"><span class="caret" style="margin:0 6px 0 0;font-size:13px">'+(o?'▾':'▸')+'</span>第'+(y+1)+'年</td><td class="mut" style="white-space:nowrap">'+seg[0].y+'/'+seg[0].m+'–'+seg[11].y+'/'+seg[11].m+'</td><td class="b">$'+f0(tp)+'</td><td class="b" style="color:var(--dn)">$'+f0(ti)+'</td><td class="b">$'+f0(tpr)+'</td><td class="b">$'+f0(seg[11].bal)+'</td></tr>';
+    if(o)seg.forEach(r=>{const done=r.t<=now;s+='<tr style="background:var(--chip)"><td class="mut" style="padding-left:26px;white-space:nowrap">第'+r.k+'期'+(done?' ✓':'')+'</td><td class="mut">'+dstr(r.t)+'</td><td>$'+f0(r.pay)+'</td><td style="color:var(--dn)">$'+f0(r.i)+'</td><td>$'+f0(r.p)+'</td><td>$'+f0(r.bal)+'</td></tr>';});}
+  s+='<tr style="border-top:2px solid var(--line);font-weight:900"><td>合計</td><td></td><td class="b">$'+f0(R.reduce((a,r)=>a+r.pay,0))+'</td><td class="b" style="color:var(--dn)">$'+f0(totI)+'</td><td class="b">$'+f0(LOAN.P)+'</td><td></td></tr></table></div>';
+  if(sc)sc.innerHTML=s;}
 /* ───────── 📒 個股交易（已平倉已實現，獨立於長期配置）───────── */
 const TRADE_SEED=[
   /* 台股：來源《台美股總損益與進出紀錄_2026-0618》每檔績效（含費用後） */
@@ -835,7 +896,7 @@ function renderTrades(){
   const sg=v=>(v>=0?'+':'−')+'$'+f0(Math.abs(v));const cl=v=>v>=0?'var(--up)':'var(--dn)';
   /* 持有中 */
   let unr=0,unrN=0,posCost=0,posVal=0;S.pos.forEach(o=>{const u=posUnreal(o);const mult=o.m==='us'?(gv('fx')||32):1;posCost+=(o.p||0)*(o.q||0)*mult;if(u!=null){unr+=u;unrN++;posVal+=posPrice(o)*o.q*mult;}});
-  const tot=real+ltp+unr;
+  const tot=real+ltp+unr;window.TOTPNL=tot;
   top.innerHTML='<div class="pnlcard" style="margin-top:6px"><div class="pnlnums">'+
     '<div class="pnlcell"><span class="pl">長期投資（未實現）</span><b style="color:'+(lt?cl(ltp):'var(--mut)')+'">'+(lt?sg(ltp):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(lt?('市值 $'+f0(lt.val)+' · 成本 $'+f0(lt.cost)+' · '+(lt.cost>0?((ltp>=0?'+':'')+(ltp/lt.cost*100).toFixed(1)+'%'):'')):'評估工具抓價後顯示')+'</span></div>'+
     '<div class="pnlcell"><span class="pl">個股持有中（未實現）</span><b style="color:'+(S.pos.length?cl(unr):'var(--mut)')+'">'+(S.pos.length?sg(unr):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(S.pos.length?(unrN+'/'+S.pos.length+' 檔有報價 · 成本 $'+f0(posCost)+(posCost>0&&unrN?' · '+(unr>=0?'+':'')+(unr/posCost*100).toFixed(1)+'%':'')):'尚無持有中個股')+'</span></div>'+
@@ -868,7 +929,7 @@ function renderTrades(){
       return h;}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
   if(sum)sum.innerHTML='<div class="chips" style="margin-top:8px"><div class="chip"><div class="l">台股已實現</div><div class="v" style="color:'+cl(tw)+'">'+sg(tw)+'</div><div class="s">'+S.trades.filter(t=>t.m!=='us').length+' 筆</div></div>'+
     '<div class="chip"><div class="l">美股已實現</div><div class="v" style="color:'+cl(usTWD)+'">'+sg(usTWD)+'</div><div class="s">'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+' · '+S.trades.filter(t=>t.m==='us').length+' 筆</div></div>'+
-    '<div class="chip"><div class="l">勝率</div><div class="v">'+(n?Math.round(win/n*100):0)+'%</div><div class="s">'+win+' 賺 / '+(n-win)+' 賠 · 共 '+n+' 筆</div></div></div>';
+    '</div>';
   if(tb){tb.innerHTML=rows.map(t=>{const us=t.m==='us';const pl=trPL(t);const cur=us?'US$':'$';const rr=(t.b>0)?(pl/t.b*100):null;
     return '<tr><td>'+(t.d||'').slice(5).replace('-','/')+'<span class="sub il" style="margin-left:4px">'+(t.d||'').slice(0,4)+'</span></td>'+
       '<td class="b" style="text-align:left">'+t.s+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span></td>'+
@@ -1117,7 +1178,7 @@ function recalcHold(){
   const box=document.getElementById('pnlbox');if(!box)return;
   if(cost<=0||val<=0){box.innerHTML='<div class="note" style="border:none;padding-top:2px">填入各標的成交均價與股數後，自動計算已投入、達成率、損益與例外條款。</div>';if(exbox)exbox.innerHTML='';window.LTP=null;if(typeof renderTrades==='function')renderTrades();return;}
   const port=(val/adjCost-1)*100;const pnl=val-adjCost;const plc=pnl>=0?'var(--up)':'var(--dn)';
-  window.LTP={cost:adjCost,val:val,pnl:pnl};if(typeof renderTrades==='function')renderTrades();
+  window.LTP={cost:adjCost,val:val,pnl:pnl,inv:cost};if(typeof renderTrades==='function')renderTrades();if(typeof renderLoan==='function')renderLoan();
   box.innerHTML='<div class="pnlcard"><div class="pnlnums">'+
     '<div class="pnlcell"><span class="pl">成本'+(rlossTot>0?'＊':'')+'</span><b>$'+f0(adjCost)+'</b></div>'+
     '<div class="pnlcell"><span class="pl">市值</span><b>$'+f0(val)+'</b></div>'+
@@ -1445,7 +1506,7 @@ function recalcAssets(){
 
 /* fbRef 等 Firebase 變數須在任何 recalc/save 之前宣告，否則初始化時 fbSave 讀到 TDZ 會中斷整段腳本（fbInit 不會跑、登入卡在「連線中」）*/
 let fbRef=null,fbUnsub=null,fbTimer=null,fbApplying=false;
-loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();
+loadMktCache();buildAlloc();buildPlan();buildMkt();recalcAlloc();applySecs();recalcAssets();buildPnlChart();buildFxChart();renderLoan();
 fetchMkt();
 /* 懸浮提示：共用一個 #tipbox，依元素位置計算、夾在視窗內；上方放不下就放下方 */
 (function(){const tb=document.createElement('div');tb.id='tipbox';document.body.appendChild(tb);let cur=null;
