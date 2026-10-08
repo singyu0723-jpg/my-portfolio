@@ -1405,10 +1405,10 @@ async function fetchMkt(){
   if(typeof fetchPosPx==='function')fetchPosPx();
 }
 /* ───────── 損益走勢圖：歷史收盤＋批次日期重建（成本 staircase vs 市值） ───────── */
-let HIST={},pnlBusy=false,FXHIST=null,fxBusy=false;
+let HIST={},HISTT={},pnlBusy=false,FXHIST=null,fxBusy=false;
 const MKTKEY='erick_mkt_v1';
-function saveMktCache(){try{const p={};MKT.forEach(m=>{if(isFinite(m[2])&&m[2])p[m[1]]=[m[2],m[3]];});localStorage.setItem(MKTKEY,JSON.stringify({p:p,hist:HIST,fx:window.FXRATE||null,fxhist:FXHIST,t:Date.now()}));}catch(e){}}
-function loadMktCache(){try{const c=JSON.parse(localStorage.getItem(MKTKEY));if(!c)return;if(c.hist)HIST=c.hist;if(c.fxhist)FXHIST=c.fxhist;if(c.p)MKT.forEach(m=>{if(c.p[m[1]]){m[2]=c.p[m[1]][0];m[3]=c.p[m[1]][1];}});if(c.fx){window.FXRATE=c.fx;const fe=document.getElementById('fx');if(fe)fe.value=c.fx;const fs=document.getElementById('fxstatus');if(fs)fs.textContent=(+c.fx).toFixed(2);}if(c.t){const st=document.getElementById('mkstatus');if(st)st.textContent='上次 '+new Date(c.t).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+'（快取）';}}catch(e){}}
+function saveMktCache(){try{const p={};MKT.forEach(m=>{if(isFinite(m[2])&&m[2])p[m[1]]=[m[2],m[3]];});localStorage.setItem(MKTKEY,JSON.stringify({p:p,hist:HIST,histt:HISTT,fx:window.FXRATE||null,fxhist:FXHIST,t:Date.now()}));}catch(e){}}
+function loadMktCache(){try{const c=JSON.parse(localStorage.getItem(MKTKEY));if(!c)return;if(c.hist)HIST=c.hist;if(c.histt)HISTT=c.histt;if(c.fxhist)FXHIST=c.fxhist;if(c.p)MKT.forEach(m=>{if(c.p[m[1]]){m[2]=c.p[m[1]][0];m[3]=c.p[m[1]][1];}});if(c.fx){window.FXRATE=c.fx;const fe=document.getElementById('fx');if(fe)fe.value=c.fx;const fs=document.getElementById('fxstatus');if(fs)fs.textContent=(+c.fx).toFixed(2);}if(c.t){const st=document.getElementById('mkstatus');if(st)st.textContent='上次 '+new Date(c.t).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})+'（快取）';}}catch(e){}}
 function renderFxChart(){
   const box=document.getElementById('fxchart');if(!box)return;
   const h=FXHIST;
@@ -1470,7 +1470,7 @@ function renderPnlChart(){
     PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds)ASSETS.forEach(a=>{const f=getFill(i,a[0]);if(f.p>0&&f.s>0){c+=f.p*f.s*((a[3]==='us')?fx:1);seenUS[a[0]]=(a[3]==='us');}});});
     ASSETS.forEach(a=>{if(seenUS[a[0]]!==undefined){const rl=RLOSS[a[0]]||0;if(rl)c+=rl*(seenUS[a[0]]?fx:1);}});/* 成本含已實現虧損，與持倉表/損益卡一致 */
     items.forEach(it=>{let sh=0;PLAN_DEF.forEach((p,i)=>{if(S.dates[i]<=ds){const f=getFill(i,it.k);if(f.p>0&&f.s>0)sh+=f.s;}});
-      if(sh>0){let px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0){v+=px*sh*(it.us?fx:1);has=true;}}});
+      if(sh>0){/* 今天用現價（與②持倉表一致），過去用當日收盤 */let px=null;if(ds===today){const cp=curPrice(it.k);if(cp!=null&&isFinite(cp)&&cp>0)px=cp;}if(px==null)px=closeOn(it.sym,ds);if(px==null)px=curPrice(it.k);if(px!=null&&px>0){v+=px*sh*(it.us?fx:1);has=true;}}});
     cost.push(c);val.push(has?v:null);});
   const W=720,H=240,PL=58,PR=14,PT=16,PB=26;
   /* X 軸：滾動視窗（最近10交易日 / 最近一個月），由 window.PNLRANGE 決定；Y 軸自動縮放到視窗內資料 */
@@ -1522,10 +1522,10 @@ async function buildPnlChart(){
   const box=document.getElementById('pnlchart');if(!box||pnlBusy)return;
   const need=[];
   ASSETS.forEach(a=>{const k=a[0];let sh=0;PLAN_DEF.forEach((p,i)=>{const f=getFill(i,k);if(f.p>0&&f.s>0)sh+=f.s;});
-    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(!m||!m[1])return;const h=HIST[m[1]];const hk=h?Object.keys(h).sort():[];const last=hk.length?hk[hk.length-1]:'';const first=hk.length?hk[0]:'';const stale=!h||last<dstr(new Date(Date.now()-4*864e5))||(S.dates[0]&&first>S.dates[0]);/* 舊快取只有 3 個月 → 不夠畫「全部」也重抓 *//* 快取超過4天沒新收盤 → 重抓，否則走勢圖會變一條水平線 */if(stale)need.push(m[1]);}});
+    if(sh>0){const m=MKT.find(x=>x[0]===MKTMAP[k]);if(!m||!m[1])return;const h=HIST[m[1]];const hk=h?Object.keys(h).sort():[];const last=hk.length?hk[hk.length-1]:'';const first=hk.length?hk[0]:'';const stale=!h||!(HISTT[m[1]]>Date.now()-3*36e5)||(S.dates[0]&&first>S.dates[0]);/* 2026-10-08：改成距上次抓超過 3 小時就重抓（原本 4 天，台股收盤卡在舊值） *//* 舊快取只有 3 個月 → 不夠畫「全部」也重抓 *//* 快取超過4天沒新收盤 → 重抓，否則走勢圖會變一條水平線 */if(stale)need.push(m[1]);}});
   if(!need.length)return;
   pnlBusy=true;
-  try{await Promise.all(need.map(async sym=>{const h=await yhist(sym);if(h)HIST[sym]=h;}));
+  try{await Promise.all(need.map(async sym=>{const h=await yhist(sym);if(h){HIST[sym]=h;HISTT[sym]=Date.now();}}));
     saveMktCache();renderPnlChart();}
   finally{pnlBusy=false;}
 }
