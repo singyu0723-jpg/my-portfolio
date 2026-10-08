@@ -565,7 +565,7 @@ th,td{padding:6px 4px;font-size:12px}
 <section class="slide">
   <h2 class="sect"><span class="num">Σ</span>總損益總覽</h2>
   <div id="tr_top"></div>
-  <div class="note" style="border:none;padding-top:4px">長期投資＝長期投資分頁②的未實現損益（成本含舊帳戶已實現虧損）；個股交易＝本頁已平倉紀錄的已實現損益，美股依各筆匯率換算台幣。兩者獨立計算，合計僅供總覽。</div>
+  <div class="note" style="border:none;padding-top:4px">長期投資＝長期投資分頁②的未實現損益（成本含舊帳戶已實現虧損）；個股交易＝本頁已賣出紀錄的已實現損益，美股依各筆匯率換算台幣。兩者獨立計算，合計僅供總覽。</div>
 </section>
 
 <section class="slide">
@@ -582,11 +582,24 @@ th,td{padding:6px 4px;font-size:12px}
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end"><button class="btn ghost" onclick="togglePosForm()">取消</button><button class="btn" onclick="addPos()">儲存持股</button></div>
   </div>
+  <div id="pos_sum"></div>
+  <div id="sell_form" style="display:none;margin-top:12px;border:1px dashed var(--accent);border-radius:12px;padding:12px 14px">
+    <div style="font-size:13px;font-weight:900;margin-bottom:8px">賣出 <span id="se_title"></span><span class="mut" id="se_hint" style="font-weight:700;font-size:11.5px;margin-left:8px"></span></div>
+    <div class="tgrid">
+      <label>賣出日<input type="date" id="se_d"></label>
+      <label>賣出股數<input type="number" id="se_q" step="any" min="0" oninput="seCalc()"></label>
+      <label>賣出價（每股）<input type="number" id="se_p" step="any" min="0" oninput="seCalc()"></label>
+      <label>實收總額（可改，填券商扣費後）<input type="number" id="se_a" step="any" min="0" oninput="seCalc(true)"></label>
+      <label style="grid-column:span 2">備註<input type="text" id="se_n" placeholder="停利／停損／減碼…"></label>
+      <label style="grid-column:span 2">預估<div id="se_calc" class="mut" style="font-size:12px;font-weight:700;padding-top:6px;line-height:1.6">—</div></label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end"><button class="btn ghost" onclick="closeSell()">取消</button><button class="btn" onclick="doSell()">確認賣出並寫入交易紀錄</button></div>
+  </div>
   <div class="twrap" style="margin-top:12px"><table class="ctr post">
     <tr><th>標的</th><th>股數</th><th>買入均價</th><th>現價</th><th>成本</th><th>市值</th><th>未實現損益</th><th></th></tr>
     <tbody id="pos_body"></tbody>
   </table></div>
-  <div class="note" style="border:none;padding-top:4px">現價：台股走證交所即時、美股走 Yahoo（延遲 15–20 分）；按上方「↻ 重新抓價」會一起更新。未實現損益未扣手續費／證交稅，平倉時再填券商實際數字。</div>
+  <div class="note" style="border:none;padding-top:4px">現價：台股走證交所即時、美股走 Yahoo（延遲 15–20 分）；按上方「↻ 重新抓價」會一起更新。未實現損益未扣手續費／證交稅，賣出時再填券商實際數字。</div>
 </section>
 
 <section class="slide">
@@ -594,7 +607,7 @@ th,td{padding:6px 4px;font-size:12px}
   <div id="tr_sum"></div>
   <div id="tr_form" style="display:none;margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px">
     <div class="tgrid">
-      <label>平倉日期<input type="date" id="tr_d"></label>
+      <label>賣出日期<input type="date" id="tr_d"></label>
       <label>市場<select id="tr_m"><option value="tw">台股</option><option value="us">美股</option></select></label>
       <label>標的<input type="text" id="tr_s" placeholder="聯電 2303"></label>
       <label>股數<input type="number" id="tr_q" step="any" min="0" placeholder="1000"></label>
@@ -607,7 +620,7 @@ th,td{padding:6px 4px;font-size:12px}
     <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end"><button class="btn ghost" onclick="toggleTrForm()">取消</button><button class="btn" onclick="addTrade()">儲存這筆</button></div>
   </div>
   <div class="twrap" style="margin-top:14px"><table class="ctr trt">
-    <tr><th>平倉日</th><th>標的</th><th>股數</th><th>買入</th><th>賣出</th><th>損益</th><th>報酬率</th><th>備註</th><th></th></tr>
+    <tr><th>賣出日</th><th>標的</th><th>股數</th><th>買入</th><th>賣出</th><th>損益</th><th>報酬率</th><th>備註</th><th></th></tr>
     <tbody id="tr_body"></tbody>
   </table></div>
   <div class="note">金額填「含手續費／證交稅後」的數字（券商對帳單的投資成本與帳面收入），損益就會跟券商一致；或直接填券商顯示的損益。歷史 2026/5–6 的紀錄已由《台美股總損益與進出紀錄_2026-0618》匯入，美股以 31.45 換算。</div>
@@ -906,15 +919,37 @@ function addPos(){
   save();['po_c','po_s','po_q','po_p','po_n'].forEach(id=>g(id).value='');togglePosForm();renderTrades();fetchPosPx();
 }
 function delPos(i){const o=S.pos[i];if(!o)return;if(!confirm('刪除持股 '+(posName(o)||o.c)+'？（不會寫入交易紀錄）'))return;S.pos.splice(i,1);save();renderTrades();}
-function closePos(i){
-  const o=S.pos[i];if(!o)return;const us=o.m==='us';const px=posPrice(o);
-  const sp=prompt((posName(o)||o.c)+' 平倉：請填「賣出總額」（帳面收入，扣費用後）'+(us?'，美元':'，台幣'),px?String(Math.round(px*o.q*100)/100):'');if(sp===null)return;
-  const a=parseFloat(sp);if(!isFinite(a)||a<=0){alert('賣出總額要是數字');return;}
-  const bp=prompt('買入總額（投資成本，含費用）',String(Math.round(o.p*o.q*100)/100));if(bp===null)return;
-  const b=parseFloat(bp)||Math.round(o.p*o.q*100)/100;
-  S.trades.push({d:todayStr(),m:o.m,s:(posName(o)?posName(o)+' ':'')+o.c,q:o.q,b:b,a:a,p:null,fx:us?(gv('fx')||32):1,n:(o.n?o.n+'；':'')+'由持有中平倉（買 '+o.d+'）'});
-  S.pos.splice(i,1);save();renderTrades();
+/* 賣出（可部分）：lot 指定單批；k 指定整檔則依買入日 FIFO 扣批次。成本＝扣掉批次的 買價×股數；實收可改成券商扣費後數字 */
+window.SELLCTX=null;
+function sellLots(){const c=window.SELLCTX;if(!c)return [];if(c.i!=null){const o=S.pos[c.i];return o?[Object.assign({i:c.i},o)]:[];}
+  return S.pos.map((o,i)=>Object.assign({i:i},o)).filter(o=>posKey(o)===c.k).sort((x,y)=>(x.d||'').localeCompare(y.d||''));}
+function openSell(k,i){window.SELLCTX={k:k,i:(i==null?null:i)};const lots=sellLots();if(!lots.length)return;const o=lots[0];const us=o.m==='us';const cur=us?'US$':'$';
+  const q=lots.reduce((t,x)=>t+(+x.q||0),0),cost=lots.reduce((t,x)=>t+(+x.q||0)*(+x.p||0),0);const px=posPrice(o);
+  const g=id=>document.getElementById(id);g('se_title').textContent=(posName(o)||'')+' '+o.c+(i!=null?'（'+(o.d||'').slice(5).replace('-','/')+' 這批）':'');
+  g('se_hint').textContent='持有 '+q.toLocaleString()+' 股 · 均價 '+cur+(+(cost/q).toFixed(2)).toLocaleString()+(lots.length>1?' · '+lots.length+' 批，依買入日先進先出':'');
+  g('se_d').value=todayStr();g('se_q').value=q;g('se_p').value=px!=null?+px.toFixed(2):'';g('se_a').value='';g('se_n').value='';
+  const f=g('sell_form');f.style.display='';seCalc();f.scrollIntoView({behavior:'smooth',block:'center'});}
+function closeSell(){window.SELLCTX=null;const f=document.getElementById('sell_form');if(f)f.style.display='none';}
+function sellSplit(q){/* 回傳 [{lot,q}] 與成本 */const lots=sellLots();let left=q;const parts=[];for(const o of lots){if(left<=0)break;const take=Math.min(left,+o.q||0);if(take>0){parts.push({o:o,q:take});left-=take;}}return {parts:parts,b:parts.reduce((t,p)=>t+p.q*(+p.o.p||0),0),left:left};}
+function seCalc(fromA){const g=id=>document.getElementById(id);const lots=sellLots();if(!lots.length)return;const us=lots[0].m==='us';const cur=us?'US$':'$';
+  const q=parseFloat(g('se_q').value)||0,p=parseFloat(g('se_p').value)||0;const sp=sellSplit(q);
+  if(!fromA)g('se_a').placeholder=q>0&&p>0?(Math.round(q*p*100)/100).toString():'';
+  const a=parseFloat(g('se_a').value)||q*p;const pl=a-sp.b;
+  g('se_calc').innerHTML=sp.left>0?'<span style="color:var(--dn)">股數超過持有（最多 '+(q-sp.left)+' 股）</span>':
+    (q>0?'成本 '+cur+f0(sp.b)+'（'+sp.parts.map(x=>x.q+'股@'+(+x.o.p).toLocaleString()).join('＋')+'）→ 實收 '+cur+f0(a)+' ＝ <b style="color:'+(pl>=0?'var(--up)':'var(--dn)')+'">'+(pl>=0?'+':'−')+cur+f0(Math.abs(pl))+'</b>'+(sp.b>0?'（'+(pl/sp.b*100).toFixed(1)+'%）':'')+'；賣後剩 '+(lots.reduce((t,x)=>t+(+x.q||0),0)-q).toLocaleString()+' 股':'—');}
+function doSell(){const g=id=>document.getElementById(id);const lots=sellLots();if(!lots.length){closeSell();return;}const o=lots[0];const us=o.m==='us';
+  const q=parseFloat(g('se_q').value)||0,p=parseFloat(g('se_p').value)||0;if(q<=0){alert('請填賣出股數');return;}
+  const sp=sellSplit(q);if(sp.left>0){alert('股數超過持有');return;}
+  const a=parseFloat(g('se_a').value)||q*p;if(!(a>0)){alert('請填賣出價或實收總額');return;}
+  const totalQ=lots.reduce((t,x)=>t+(+x.q||0),0);const all=q>=totalQ;
+  const d=g('se_d').value||todayStr();const n=g('se_n').value.trim();
+  S.trades.push({d:d,m:o.m,s:(posName(o)?posName(o)+' ':'')+o.c,q:q,b:Math.round(sp.b*100)/100,a:Math.round(a*100)/100,p:null,fx:us?(gv('fx')||32):1,
+    n:(n?n+'；':'')+(all?'全部賣出':'部分賣出，剩 '+(totalQ-q).toLocaleString()+' 股')+'（買 '+sp.parts.map(x=>(x.o.d||'').slice(5).replace('-','/')).filter((v,i,arr)=>arr.indexOf(v)===i).join('、')+' @'+(+p||0).toLocaleString()+'）'});
+  sp.parts.forEach(x=>{const lot=S.pos[x.o.i];if(lot){lot.q=Math.round(((+lot.q||0)-x.q)*10000)/10000;}});
+  S.pos=S.pos.filter(x=>(+x.q||0)>0);
+  closeSell();save();renderTrades();
 }
+function closePos(i){const o=S.pos[i];if(!o)return;openSell(posKey(o),i);}
 function trTWD(t){return trPL(t)*(t.m==='us'?(t.fx||gv('fx')||32):1);}
 function toggleTrForm(){const f=document.getElementById('tr_form');if(!f)return;const on=f.style.display==='none';f.style.display=on?'':'none';
   if(on){const d=document.getElementById('tr_d');if(d&&!d.value)d.value=todayStr();const fx=document.getElementById('tr_fx');if(fx&&!fx.value)fx.value=(gv('fx')||32).toFixed(2);}}
@@ -944,6 +979,14 @@ function renderTrades(){
     '<div class="pnlcell"><span class="pl">個股持有中（未實現）</span><b style="color:'+(S.pos.length?cl(unr):'var(--mut)')+'">'+(S.pos.length?sg(unr):'—')+'</b><span class="mut" style="font-size:11px;font-weight:700">'+(S.pos.length?(unrN+'/'+S.pos.length+' 檔有報價 · 成本 $'+f0(posCost)+(posCost>0&&unrN?' · '+(unr>=0?'+':'')+(unr/posCost*100).toFixed(1)+'%':'')):'尚無持有中個股')+'</span></div>'+
     '<div class="pnlcell"><span class="pl">個股交易（已實現）</span><b style="color:'+cl(real)+'">'+sg(real)+'</b><span class="mut" style="font-size:11px;font-weight:700">台股 '+sg(tw)+' · 美股 '+sg(usTWD)+'（'+(usd>=0?'+':'−')+'US$'+f0(Math.abs(usd))+'）</span></div>'+
     '<div class="pnlcell" style="border-color:var(--accent);box-shadow:0 0 0 2px rgba(13,148,136,.12)"><span class="pl">總損益</span><b style="color:'+cl(tot)+';font-size:22px">'+sg(tot)+'</b><span class="mut" style="font-size:11px;font-weight:700">長期未實現 ＋ 個股未實現 ＋ 個股已實現</span></div></div></div>';
+  const ps=document.getElementById('pos_sum');
+  if(ps){const nP=S.pos.length;const ltv=(lt&&lt.val>0)?lt.val:0;
+    ps.innerHTML=nP?'<div class="chips" style="margin-top:8px">'+
+      '<div class="chip"><div class="l">個股總成本</div><div class="v">$'+f0(posCost)+'</div><div class="s">'+S.pos.map(posKey).filter((v,i,a)=>a.indexOf(v)===i).length+' 檔 · '+nP+' 批 · 美股依今日匯率換台幣</div></div>'+
+      '<div class="chip"><div class="l">個股總市值</div><div class="v">'+(posVal>0?'$'+f0(posVal):'—')+'</div><div class="s">'+(unrN<nP?'有 '+(nP-unrN)+' 批尚未抓到價':'依現價')+'</div></div>'+
+      '<div class="chip"><div class="l">個股未實現</div><div class="v" style="color:'+cl(unr)+'">'+sg(unr)+'</div><div class="s">'+(posCost>0?(unr>=0?'+':'−')+Math.abs(unr/posCost*100).toFixed(1)+'%':'')+'</div></div>'+
+      '<div class="chip"><div class="l">長期＋個股 總市值</div><div class="v">'+(ltv>0?'$'+f0(ltv+posVal):'—')+'</div><div class="s">長期 $'+fmtW(ltv)+' ＋ 個股 $'+fmtW(posVal)+'</div></div>'+
+      '</div>':'';}
   const pb=document.getElementById('pos_body');
   if(pb){
     /* 同一檔多批買入 → 合併成一列（加權均價、總股數），點 ▸ 展開看各批 */
@@ -954,7 +997,7 @@ function renderTrades(){
         '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td><td></td>'+
         '<td>'+cur+f0(cost)+'</td><td>'+(px!=null?cur+f0(px*o.q):'—')+'</td>'+
         '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
-        '<td><span class="act"><button onclick="closePos('+o.i+')" title="平倉這批並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+o.i+')" title="刪除這批">✕</button></span></td></tr>';};
+        '<td><span class="act"><button onclick="openSell(posKey(S.pos['+o.i+']),'+o.i+')" title="賣出這批（可部分）並寫入交易紀錄">賣出</button><button class="x" onclick="delPos('+o.i+')" title="刪除這批">✕</button></span></td></tr>';};
     pb.innerHTML=order.map(k=>{const lots=groups[k];const o=lots[0];const us=o.m==='us';const cur=us?'US$':'$';const mult=us?(gv('fx')||32):1;const px=posPrice(o);const r=POSPX[k];
       const q=lots.reduce((t,x)=>t+(+x.q||0),0),cost=lots.reduce((t,x)=>t+(+x.q||0)*(+x.p||0),0),avg=q>0?cost/q:0;
       const val=px!=null?px*q:null;const u=val!=null?(val-cost)*mult:null;const rr=(px!=null&&avg>0)?((px/avg-1)*100):null;
@@ -966,7 +1009,7 @@ function renderTrades(){
         '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
         '<td>'+(val!=null?(cur+f0(val)+(us?'<div class="sub">≈$'+f0(val*mult)+'</div>':'')):'—')+'</td>'+
         '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?((us?'<span class="tip" tabindex="0" data-tip="'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'">'+sg(u)+'</span>':sg(u))+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
-        '<td onclick="event.stopPropagation()">'+(multi?'<span class="sub" style="font-size:10.5px">展開操作</span>':'<span class="act"><button onclick="closePos('+o.i+')" title="平倉並寫入交易紀錄">平倉</button><button class="x" onclick="delPos('+o.i+')" title="刪除">✕</button></span>')+'</td></tr>';
+        '<td onclick="event.stopPropagation()">'+(multi?'<span class="act"><button onclick="openSell(\''+k+'\',null)" title="賣出（可部分，依買入日先進先出）">賣出</button></span><div class="sub" style="font-size:10px">單批請展開</div>':'<span class="act"><button onclick="openSell(\''+k+'\','+o.i+')" title="賣出（可部分）並寫入交易紀錄">賣出</button><button class="x" onclick="delPos('+o.i+')" title="刪除">✕</button></span>')+'</td></tr>';
       if(multi&&open)h+=lots.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||'')).map(x=>lotRow(x,us,cur,mult,px,r)).join('');
       return h;}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
   if(sum)sum.innerHTML='<div class="chips" style="margin-top:8px"><div class="chip"><div class="l">台股已實現</div><div class="v" style="color:'+cl(tw)+'">'+sg(tw)+'</div><div class="s">'+S.trades.filter(t=>t.m!=='us').length+' 筆</div></div>'+
