@@ -597,7 +597,7 @@ th,td{padding:6px 4px;font-size:12px}
       <label>賣出日<input type="date" id="se_d"></label>
       <label>賣出股數<input type="number" id="se_q" step="any" min="0" oninput="seCalc()"></label>
       <label>賣出價（每股）<input type="number" id="se_p" step="any" min="0" oninput="seCalc()"></label>
-      <label>實收總額（可改，填券商扣費後）<input type="number" id="se_a" step="any" min="0" oninput="seCalc(true)"></label>
+      <label>實收總額（預設已扣手續費＋證交稅，可改成券商實際數字）<input type="number" id="se_a" step="any" min="0" oninput="seCalc(true)"></label>
       <label style="grid-column:span 2">備註<input type="text" id="se_n" placeholder="停利／停損／減碼…"></label>
       <label style="grid-column:span 2">預估<div id="se_calc" class="mut" style="font-size:12px;font-weight:700;padding-top:6px;line-height:1.6">—</div></label>
     </div>
@@ -607,7 +607,7 @@ th,td{padding:6px 4px;font-size:12px}
     <tr><th>標的</th><th>股數</th><th>買入均價</th><th>現價</th><th>成本</th><th>市值</th><th>未實現損益</th><th></th></tr>
     <tbody id="pos_body"></tbody>
   </table></div>
-  <div class="note" style="border:none;padding-top:4px">現價：台股走證交所即時、美股走 Yahoo（延遲 15–20 分）；按上方「↻ 重新抓價」會一起更新。未實現損益未扣手續費／證交稅，賣出時再填券商實際數字。</div>
+  <div class="note" style="border:none;padding-top:4px">現價：台股走證交所即時、美股走 Yahoo（延遲 15–20 分）；按上方「↻ 重新抓價」會一起更新。台股未實現損益已扣賣出手續費 0.1425% 與證交稅（股票 0.3%、ETF 0.1%），與券商 App「試算損益」同算法；買入手續費若要計入，買入均價請填券商成本均價。</div>
 </section>
 
 <section class="slide">
@@ -895,7 +895,10 @@ if(!S.pos)S.pos=[];
 let POSPX={};try{POSPX=JSON.parse(localStorage.getItem('erick_pospx_v1'))||{};}catch(e){}
 const posKey=o=>(o.m==='us'?'US:':'TW:')+String(o.c||'').trim().toUpperCase();
 function posPrice(o){const r=POSPX[posKey(o)];return (r&&isFinite(r.price)&&r.price>0)?r.price:null;}
-function posUnreal(o){const px=posPrice(o);if(px==null)return null;return (px-(o.p||0))*(o.q||0)*(o.m==='us'?(gv('fx')||32):1);}
+/* 賣出費稅率（對齊券商「試算損益」）：台股 手續費 0.1425% ＋ 證交稅 0.3%（00 開頭 ETF 0.1%）；美股 0 */
+function posFeeRate(o){if(!o||o.m==='us')return 0;return 0.001425+(/^00/.test(String(o.c||''))?0.001:0.003);}
+function posFee(o,gross){if(!o||o.m==='us'||!(gross>0))return 0;return Math.floor(gross*0.001425)+Math.floor(gross*(/^00/.test(String(o.c||''))?0.001:0.003));}
+function posUnreal(o){const px=posPrice(o);if(px==null)return null;const g=px*(o.q||0);return (g-posFee(o,g)-(o.p||0)*(o.q||0))*(o.m==='us'?(gv('fx')||32):1);}
 let posBusy=false;
 async function fetchPosPx(){
   if(posBusy||!S.pos.length)return;posBusy=true;
@@ -941,14 +944,14 @@ function closeSell(){window.SELLCTX=null;const f=document.getElementById('sell_f
 function sellSplit(q){/* 回傳 [{lot,q}] 與成本 */const lots=sellLots();let left=q;const parts=[];for(const o of lots){if(left<=0)break;const take=Math.min(left,+o.q||0);if(take>0){parts.push({o:o,q:take});left-=take;}}return {parts:parts,b:parts.reduce((t,p)=>t+p.q*(+p.o.p||0),0),left:left};}
 function seCalc(fromA){const g=id=>document.getElementById(id);const lots=sellLots();if(!lots.length)return;const us=lots[0].m==='us';const cur=us?'US$':'$';
   const q=parseFloat(g('se_q').value)||0,p=parseFloat(g('se_p').value)||0;const sp=sellSplit(q);
-  if(!fromA)g('se_a').placeholder=q>0&&p>0?(Math.round(q*p*100)/100).toString():'';
-  const a=parseFloat(g('se_a').value)||q*p;const pl=a-sp.b;
+  const net=q*p-posFee(lots[0],q*p);if(!fromA)g('se_a').placeholder=q>0&&p>0?(Math.round(net*100)/100).toString():'';
+  const a=parseFloat(g('se_a').value)||net;const pl=a-sp.b;
   g('se_calc').innerHTML=sp.left>0?'<span style="color:var(--dn)">股數超過持有（最多 '+(q-sp.left)+' 股）</span>':
     (q>0?'成本 '+cur+f0(sp.b)+'（'+sp.parts.map(x=>x.q+'股@'+(+x.o.p).toLocaleString()).join('＋')+'）→ 實收 '+cur+f0(a)+' ＝ <b style="color:'+(pl>=0?'var(--up)':'var(--dn)')+'">'+(pl>=0?'+':'−')+cur+f0(Math.abs(pl))+'</b>'+(sp.b>0?'（'+(pl/sp.b*100).toFixed(1)+'%）':'')+'；賣後剩 '+(lots.reduce((t,x)=>t+(+x.q||0),0)-q).toLocaleString()+' 股':'—');}
 function doSell(){const g=id=>document.getElementById(id);const lots=sellLots();if(!lots.length){closeSell();return;}const o=lots[0];const us=o.m==='us';
   const q=parseFloat(g('se_q').value)||0,p=parseFloat(g('se_p').value)||0;if(q<=0){alert('請填賣出股數');return;}
   const sp=sellSplit(q);if(sp.left>0){alert('股數超過持有');return;}
-  const a=parseFloat(g('se_a').value)||q*p;if(!(a>0)){alert('請填賣出價或實收總額');return;}
+  const a=parseFloat(g('se_a').value)||(q*p-posFee(o,q*p));if(!(a>0)){alert('請填賣出價或實收總額');return;}
   const totalQ=lots.reduce((t,x)=>t+(+x.q||0),0);const all=q>=totalQ;
   const d=g('se_d').value||todayStr();const n=g('se_n').value.trim();
   S.trades.push({d:d,m:o.m,s:(posName(o)?posName(o)+' ':'')+o.c,q:q,b:Math.round(sp.b*100)/100,a:Math.round(a*100)/100,p:null,fx:us?(gv('fx')||32):1,
@@ -1004,15 +1007,15 @@ function renderTrades(){
     /* 同一檔多批買入 → 合併成一列（加權均價、總股數），點 ▸ 展開看各批 */
     const groups={},order=[];S.pos.forEach((o,i)=>{const k=posKey(o);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(Object.assign({i:i},o));});
     window.POSOPEN=window.POSOPEN||{};
-    const lotRow=(o,us,cur,mult,px,r)=>{const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(px!=null&&o.p>0)?((px/o.p-1)*100):null;
+    const lotRow=(o,us,cur,mult,px,r)=>{const u=posUnreal(o);const cost=(o.p||0)*(o.q||0);const rr=(u!=null&&cost>0)?(u/(cost*mult)*100):null;
       return '<tr class="lot"><td style="text-align:left;padding-left:26px"><span class="sub" style="font-size:11px">買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:'')+'</span></td>'+
         '<td>'+(+o.q).toLocaleString()+'</td><td>'+cur+(+o.p).toLocaleString()+'</td><td></td>'+
         '<td>'+cur+f0(cost)+'</td><td>'+(px!=null?cur+f0(px*o.q):'—')+'</td>'+
-        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?(sg(u)+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?((us?sg(u):'<span class="tip" tabindex="0" data-tip="市值 $'+f0(px*o.q)+' − 賣出費稅 $'+f0(posFee(o,px*o.q))+' − 成本 $'+f0(cost)+'">'+sg(u)+'</span>')+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
         '<td><span class="act"><button onclick="openSell(posKey(S.pos['+o.i+']),'+o.i+')" title="賣出這批（可部分）並寫入交易紀錄">賣出</button><button class="x" onclick="delPos('+o.i+')" title="刪除這批">✕</button></span></td></tr>';};
     pb.innerHTML=order.map(k=>{const lots=groups[k];const o=lots[0];const us=o.m==='us';const cur=us?'US$':'$';const mult=us?(gv('fx')||32):1;const px=posPrice(o);const r=POSPX[k];
       const q=lots.reduce((t,x)=>t+(+x.q||0),0),cost=lots.reduce((t,x)=>t+(+x.q||0)*(+x.p||0),0),avg=q>0?cost/q:0;
-      const val=px!=null?px*q:null;const u=val!=null?(val-cost)*mult:null;const rr=(px!=null&&avg>0)?((px/avg-1)*100):null;
+      const val=px!=null?px*q:null;const fee=val!=null?lots.reduce((t,x)=>t+posFee(x,px*(+x.q||0)),0):0;const u=val!=null?(val-fee-cost)*mult:null;const rr=(u!=null&&cost>0)?(u/(cost*mult)*100):null;
       const open=!!window.POSOPEN[k];const nm=posName(o);const multi=lots.length>1;
       let h='<tr'+(multi?' style="cursor:pointer" onclick="POSOPEN[\''+k+'\']=!POSOPEN[\''+k+'\'];renderTrades()"':'')+'><td class="b" style="text-align:left">'+(multi?'<span class="caret" style="margin:0 6px 0 0;font-size:13px">'+(open?'▾':'▸')+'</span>':'')+(nm?nm+' ':'')+o.c+'<span class="mkt '+(us?'us':'tw')+'">'+(us?'美':'台')+'</span>'+
         '<div class="sub" style="font-size:10.5px">'+(multi?lots.length+' 批買入 · ':'買 '+(o.d||'').slice(5).replace('-','/')+(o.n?' · '+o.n:''))+(multi?'最早 '+lots.map(x=>x.d).sort()[0].slice(5).replace('-','/'):'')+'</div></td>'+
@@ -1020,7 +1023,7 @@ function renderTrades(){
         '<td>'+(px!=null?(cur+(+px.toFixed(2)).toLocaleString()+(r&&r.sess?'<span class="sub il" style="margin-left:3px">'+r.sess+'</span>':'')):'<span class="mut">抓取中</span>')+'</td>'+
         '<td>'+cur+f0(cost)+(us?'<div class="sub">≈$'+f0(cost*mult)+'</div>':'')+'</td>'+
         '<td>'+(val!=null?(cur+f0(val)+(us?'<div class="sub">≈$'+f0(val*mult)+'</div>':'')):'—')+'</td>'+
-        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?((us?'<span class="tip" tabindex="0" data-tip="'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'">'+sg(u)+'</span>':sg(u))+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
+        '<td class="b" style="color:'+(u!=null?cl(u):'var(--mut)')+'">'+(u!=null?((us?'<span class="tip" tabindex="0" data-tip="'+(u>=0?'+':'−')+'US$'+Math.abs(val-cost).toFixed(2)+'">'+sg(u)+'</span>':'<span class="tip" tabindex="0" data-tip="試算損益（同券商）＝ 市值 $'+f0(val)+' − 賣出手續費 0.1425% 與證交稅 $'+f0(fee)+' − 成本 $'+f0(cost)+'">'+sg(u)+'</span>')+'<span class="pct">'+(rr>=0?'+':'−')+Math.abs(rr).toFixed(1)+'%</span>'):'—')+'</td>'+
         '<td onclick="event.stopPropagation()">'+(multi?'<span class="act"><button onclick="openSell(\''+k+'\',null)" title="賣出（可部分，依買入日先進先出）">賣出</button></span><div class="sub" style="font-size:10px">單批請展開</div>':'<span class="act"><button onclick="openSell(\''+k+'\','+o.i+')" title="賣出（可部分）並寫入交易紀錄">賣出</button><button class="x" onclick="delPos('+o.i+')" title="刪除">✕</button></span>')+'</td></tr>';
       if(multi&&open)h+=lots.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||'')).map(x=>lotRow(x,us,cur,mult,px,r)).join('');
       return h;}).join('')||'<tr><td colspan="8" class="mut">尚無持有中個股，按右上角「＋ 新增持股」。</td></tr>';}
