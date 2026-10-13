@@ -1208,7 +1208,7 @@ function buildHold(){
 }
 function recalcHold(){
   const fund=TF(),fx=gv('fx')||32;
-  let cost=0,val=0,adjCost=0,rlossTot=0;const H={};
+  let cost=0,val=0,adjCost=0,rlossTot=0,feeTot=0;const H={};
   ASSETS.forEach(a=>{
     const k=a[0];const us=a[3]==='us';const mult=us?fx:1;
     /* 由各批次買入彙總 */
@@ -1222,7 +1222,9 @@ function recalcHold(){
     const inv=tc*mult;                             /* 實際投入(達成/進度用) */
     const adjInv=(tc+rl)*mult;                     /* 調整後成本(損益用) */
     const cv=(isFinite(cur)&&cur>0&&sh>0)?cur*sh*mult:0;
-    H[k]={sh:sh,cv:cv,inv:inv,adjInv:adjInv};
+    /* 台股損益扣賣出手續費 0.1425%＋證交稅（ETF 0.1%／股票 0.3%），對齊券商試算損益；美股（台新複委託）費率待確認，暫不扣 */
+    const fee=(!us&&cv>0)?Math.floor(cv*0.001425)+Math.floor(cv*(/^t00/.test(k)?0.001:0.003)):0;
+    H[k]={sh:sh,cv:cv,inv:inv,adjInv:adjInv,fee:fee};
     const ge=document.getElementById('gt_'+k);if(ge)ge.innerHTML='目標 '+(+A[k].toFixed(0))+'% <span id="gta_'+k+'"></span>';
     const she=document.getElementById('sh_'+k);if(she){const achS=tgt>0?inv/tgt*100:0;she.innerHTML=sh>0?'<span class="tip l b" tabindex="0" data-tip="部位完成率 '+achS.toFixed(0)+'%'+(achS>=102?'（超買）':'')+' · 已投入 $'+f0(inv)+' / 目標 $'+f0(tgt)+'"><b>'+(+sh.toFixed(2)).toLocaleString()+'</b> 股</span>':'—';}
     const ave=document.getElementById('avg_'+k);
@@ -1234,9 +1236,9 @@ function recalcHold(){
         ave.innerHTML='<b class="cm">$'+fmtW(adjInv)+'</b><span class="sub il">'+avgH+'</span>';}}
     const cue=document.getElementById('cur_'+k);if(cue){cue.innerHTML=(isFinite(cur)&&cur>0)?('<b class="cm">$'+fmtW(cv)+'</b><span class="sub il">現價 '+(+cur.toFixed(2)).toLocaleString()+'</span>'):'<span class="mut">抓取中</span>';}
     const pde=document.getElementById('pld_'+k);
-    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-adjInv,plp=(cur/adjAvg-1)*100;pde.innerHTML='<b class="cm">'+(pld>=0?'+':'−')+'$'+f0(Math.abs(pld))+'</b><span class="pct">'+(plp>=0?'+':'−')+Math.abs(plp).toFixed(1)+'%</span>';pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
+    if(pde){if(sh>0&&isFinite(cur)&&cur>0){const pld=cv-fee-adjInv,plp=pld/adjInv*100;pde.innerHTML='<b class="cm">'+(fee>0?'<span class="tip" tabindex="0" data-tip="試算損益（同券商）＝ 市值 $'+f0(cv)+' − 賣出手續費＋證交稅 $'+f0(fee)+' − 成本 $'+f0(adjInv)+'">':'')+(pld>=0?'+':'−')+'$'+f0(Math.abs(pld))+(fee>0?'</span>':'')+'</b><span class="pct">'+(plp>=0?'+':'−')+Math.abs(plp).toFixed(1)+'%</span>';pde.className='n b '+(pld>=0?'up':'dn');}else{pde.textContent='—';pde.className='n b';}}
     const pe=document.getElementById('pl_'+k);
-    if(pe){if(adjAvg>0&&isFinite(cur)&&cur>0){const pl=(cur/adjAvg-1)*100;
+    if(pe){if(adjAvg>0&&isFinite(cur)&&cur>0){const pl=(cv-fee)/adjInv*100-100;
       pe.textContent=(pl>=0?'+':'−')+Math.abs(pl).toFixed(1)+'%';pe.className='n b '+(pl>=0?'up':'dn');}
       else{pe.textContent='—';pe.className='n b';}}
     const ach2=tgt>0?inv/tgt*100:0;
@@ -1244,7 +1246,7 @@ function recalcHold(){
     if(ae2){const over=ach2>=102;const tip='已投入 $'+f0(inv)+' ／ 總目標 $'+f0(tgt);
       ae2.innerHTML='<span class="tip'+(over?' up':(ach2>=98?' dn':''))+'" tabindex="0" data-tip="'+tip+'">'+ach2.toFixed(0)+'%'+(over?' 超買':'')+'</span>';
       ae2.className='n b';}
-    if(inv>0){cost+=inv;val+=cv;adjCost+=adjInv;rlossTot+=rl*mult;}
+    if(inv>0){cost+=inv;val+=cv;adjCost+=adjInv;rlossTot+=rl*mult;feeTot+=fee;}
   });
   /* 目標／實際 第二行＋合計列＋①實際配置 */
   ASSETS.forEach(a=>{const k=a[0];const e=document.getElementById('gta_'+k);if(e)e.textContent=(val>0&&H[k].cv>0)?'→ 實際 '+(H[k].cv/val*100).toFixed(1)+'%':'';});
@@ -1252,7 +1254,7 @@ function recalcHold(){
     if(t('cur_tot'))t('cur_tot').innerHTML=val>0?'<b class="cm">$'+f0(val)+'</b>':'—';
     if(t('avg_tot'))t('avg_tot').innerHTML=adjCost>0?'<b class="cm">$'+f0(adjCost)+(rlossTot>0?'＊':'')+'</b>':'—';
     if(t('gt_tot'))t('gt_tot').textContent=val>0?'市值 '+fmtW(val)+' / 成本 '+fmtW(adjCost):'';
-    const pnlT=val-adjCost,plcT=pnlT>=0?'up':'dn';
+    const pnlT=val-feeTot-adjCost,plcT=pnlT>=0?'up':'dn';
     if(t('pld_tot')){t('pld_tot').innerHTML=(val>0&&adjCost>0)?'<b class="cm">'+(pnlT>=0?'+':'−')+'$'+f0(Math.abs(pnlT))+'</b><span class="pct">'+(pnlT>=0?'+':'−')+Math.abs(pnlT/adjCost*100).toFixed(1)+'%</span>':'—';t('pld_tot').className='b '+plcT;}
     if(t('sh_tot')){const ac=fund>0?cost/fund*100:0;t('sh_tot').innerHTML=cost>0?'<span class="tip l" tabindex="0" data-tip="已投入 $'+f0(cost)+' / 總目標 $'+f0(fund)+'"><b class="'+(ac>=102?'up':(ac>=98?'dn':''))+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</b></span>':'';}
     if(t('ach_tot')){const ac=fund>0?cost/fund*100:0;t('ach_tot').innerHTML='<span class="tip'+(ac>=102?' up':(ac>=98?' dn':''))+'" tabindex="0" data-tip="已投入 $'+f0(cost)+' ／ 總目標 $'+f0(fund)+'">'+ac.toFixed(0)+'%'+(ac>=102?' 超買':'')+'</span>';}}
@@ -1277,7 +1279,7 @@ function recalcHold(){
   const exbox=document.getElementById('exbox');
   const box=document.getElementById('pnlbox');if(!box)return;
   if(cost<=0||val<=0){box.innerHTML='<div class="note" style="border:none;padding-top:2px">填入各標的成交均價與股數後，自動計算已投入、達成率、損益與例外條款。</div>';if(exbox)exbox.innerHTML='';window.LTP=null;if(typeof renderTrades==='function')renderTrades();return;}
-  const port=(val/adjCost-1)*100;const pnl=val-adjCost;const plc=pnl>=0?'var(--up)':'var(--dn)';
+  const pnl=val-feeTot-adjCost;const port=pnl/adjCost*100;const plc=pnl>=0?'var(--up)':'var(--dn)';
   window.LTP={cost:adjCost,val:val,pnl:pnl,inv:cost};if(typeof renderTrades==='function')renderTrades();if(typeof renderLoan==='function')renderLoan();
   box.innerHTML='<div class="pnlcard"><div class="pnlnums">'+
     '<div class="pnlcell"><span class="pl">成本'+(rlossTot>0?'＊':'')+'</span><b>$'+f0(adjCost)+'</b></div>'+
